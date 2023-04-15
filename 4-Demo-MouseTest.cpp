@@ -55,17 +55,16 @@ void Display() {
     glFlush();
 }
 
-void Resize(GLFWwindow* window, int width, int height) {
+void Resize(int width, int height) {
     glViewport(0, 0, width, height);
     grid.Resize(width, height);
 }
 
 int main() {
     GLFWwindow* w = InitGLFW(windowedX, windowedY, windowedWidth, windowedHeight, "Mouse Test");
-    Resize(w, windowedWidth, windowedHeight); // initialize the grid
+    grid.Resize(windowedWidth, windowedHeight);
     //RegisterMouseButton(MouseButton);
-
-    glfwSetFramebufferSizeCallback(w, Resize);
+    RegisterResize(Resize);
     glfwSwapInterval(1);
     while (!glfwWindowShouldClose(w)) {
         Display();
