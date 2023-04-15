@@ -45,9 +45,6 @@ int windowedX = 200, windowedY = 200, windowedWidth = 600, windowedHeight = 600;
 int RESOLUTION = 64;
 Grid grid(RESOLUTION, 0, 0);        // Initialize with 0, will be updated in Resize
 vec3 backColor(0, .5f, 0);
-GLFWmonitor* primaryMonitor = nullptr;
-GLFWwindow* w = nullptr;
-bool isFullscreen = false;
 std::vector<std::vector<bool>> gridState;
 
 void Display() {
@@ -63,56 +60,18 @@ void Resize(GLFWwindow* window, int width, int height) {
     grid.Resize(width, height);
 }
 
-void ToggleFullscreen() {
-    if (!isFullscreen) {
-        glfwGetWindowPos(w, &windowedX, &windowedY);    // Store the current window position and size
-        glfwGetWindowSize(w, &windowedWidth, &windowedHeight);
-
-        const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
-        glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
-        glfwSetWindowMonitor(w, primaryMonitor, 0, 0, mode->width, mode->height, mode->refreshRate);
-    }
-    else {
-        glfwSetWindowMonitor(w, NULL, windowedX, windowedY, windowedWidth, windowedHeight, GLFW_DONT_CARE);
-    }
-    isFullscreen = !isFullscreen;
-}
-
-void KeyCallback(GLFWwindow* w, int key, int scancode, int action, int mods) {
-    if (action == GLFW_PRESS)
-        if (key == GLFW_KEY_F)
-            ToggleFullscreen();
-}
-
-GLFWwindow* InitGLFW(int x, int y, const char* title) {
-    if (!glfwInit())
-        return NULL;
-    primaryMonitor = glfwGetPrimaryMonitor();
-    GLFWwindow* w = glfwCreateWindow(windowedWidth, windowedHeight, title, NULL, NULL);
-
-    glfwMakeContextCurrent(w);
-    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-    return w;
-}
-
-const char* usage = R"(
-	Press F to toggle the view mode from the windowed mode to fullscreen
-)";
-
 int main() {
-    w = InitGLFW(windowedX, windowedY, "Mouse Test");
-    printf("Usage:%s", usage);
-	Resize(w, windowedWidth, windowedHeight); // initialize the grid
-    glfwSetKeyCallback(w, KeyCallback); // Register the key callback
+    GLFWwindow* w = InitGLFW(windowedX, windowedY, windowedWidth, windowedHeight, "Mouse Test");
+    Resize(w, windowedWidth, windowedHeight); // initialize the grid
     //RegisterMouseButton(MouseButton);
-    
-	glfwSetFramebufferSizeCallback(w, Resize);
-	glfwSwapInterval(1);
-	while (!glfwWindowShouldClose(w)) {
-		Display();
-		glfwSwapBuffers(w);
-		glfwPollEvents();
-	}
-	glfwDestroyWindow(w);
-	glfwTerminate();
+
+    glfwSetFramebufferSizeCallback(w, Resize);
+    glfwSwapInterval(1);
+    while (!glfwWindowShouldClose(w)) {
+        Display();
+        glfwSwapBuffers(w);
+        glfwPollEvents();
+    }
+    glfwDestroyWindow(w);
+    glfwTerminate();
 }
