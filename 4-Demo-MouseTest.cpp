@@ -100,14 +100,9 @@ const char* usage = R"(
 )";
 
 int main() {
-	// GLFWwindow *w = InitGLFW(200, 200, 600, 600, "Mouse Test");
     w = InitGLFW(windowedX, windowedY, "Mouse Test");
     printf("Usage:%s", usage);
-    
-	int width, height;
-	glfwGetFramebufferSize(w, &width, &height); // Get the initial window size
-	Resize(w, width, height); // initialize the grid
-    
+	Resize(w, windowedWidth, windowedHeight); // initialize the grid
     glfwSetKeyCallback(w, KeyCallback); // Register the key callback
     //RegisterMouseButton(MouseButton);
     
