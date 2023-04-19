@@ -6,6 +6,11 @@
 #include "GLXtras.h"
 #include <vector>
 
+
+struct Cell{
+    vec2 fd = (3.0f,3.0f)
+};
+
 class Grid {
 public:
     int resolution;
@@ -45,7 +50,6 @@ int windowedX = 200, windowedY = 200, windowedWidth = 600, windowedHeight = 600;
 int RESOLUTION = 64;
 Grid grid(RESOLUTION, 0, 0);        // Initialize with 0, will be updated in Resize
 vec3 backColor(0, .5f, 0);
-std::vector<std::vector<bool>> gridState;
 
 void Display() {
     glClearColor(backColor.x, backColor.y, backColor.z, 1);    // set background color
