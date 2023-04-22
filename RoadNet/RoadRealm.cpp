@@ -112,11 +112,11 @@ vec2 PointOnPath(float dist) {
 
 class Node {
 // represents a node in the A* search algorithm. It stores information about the node's state
-// (open, closed, or blocked) and its g, h, and f scores, which are used in the A* algorithm.
+// (open, closed, or roadPlaced) and its g, h, and f scores, which are used in the A* algorithm.
 public:
 	Grid from;
 	float g = 0, h = 0, f = 0;
-	bool blocked = false, open = false, closed = false;
+	bool roadPlaced = false, open = false, closed = false;
 	Node() { }
 };
 
@@ -178,7 +178,7 @@ public:
 						continue;
 					// skip closed nodes
 					Node &y = nodes[row][col];
-					if (y.closed || y.blocked)
+					if (y.closed || y.roadPlaced)
 						continue;
 					// tentative_g_score := g_score[x] + dist_between(x,y)
 					bool tentativeIsBetter;
@@ -214,7 +214,7 @@ public:
 		for (int row = 0; row < NROWS; row++)
 			for (int col = 0; col < NCOLS; col++) {
 				Node n = nodes[row][col];
-				vec3 color = n.open? grn : n.closed? red : n.blocked? gry : wht;
+				vec3 color = n.open? grn : n.closed? red : n.roadPlaced? gry : wht;
 				DrawRectangle((int) (x+dx*(float)col), (int) (y+dy*(float)row), (int) dx-1, (int) dy-1, color);
 			}
 		glPointSize(20);
@@ -264,7 +264,7 @@ void Display() {
 void MouseButton(float xmouse, float ymouse, bool left, bool down) {
 	if (down) {
 		int col = (int) ((xmouse-x)/dx), row = (int) ((ymouse-y)/dy);
-		astar.nodes[row][col].blocked = !astar.nodes[row][col].blocked;
+		astar.nodes[row][col].roadPlaced = !astar.nodes[row][col].roadPlaced;
 		// reset astar nodes
 		for (int row = 0; row < NROWS; row++)
 			for (int col = 0; col < NCOLS; col++) {
