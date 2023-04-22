@@ -10,8 +10,8 @@
 
 using std::vector;
 
-#define	NROWS 32
-#define	NCOLS 28
+#define	NROWS 10
+#define	NCOLS 10
 
 vec3	wht(1, 1, 1), blk(0, 0, 0),
 		gry(.5, .5, .5), 																			 // road color
@@ -53,6 +53,35 @@ void DrawPath(vector<Grid> &path, float width, vec3 color) {
 void DrawRectangle(int x, int y, int w, int h, vec3 col) {
 	Quad(x, y, x, y+h, x+w, y+h, x+w, y, true, col);
 }
+
+class GameInfoPanel {
+// stores information about the current score, the current time, and the number of roads. 
+public:
+	int score = 0;
+	int roads = 0;
+	int x, y, w, h;
+
+	GameInfoPanel(int x, int y, int w, int h) : x(x), y(y), w(w), h(h) {}
+
+	void Draw() {
+		DrawRectangle(x, y, w, h, wht); // Draw the background
+	}
+
+	void DrawScore(int score) {
+
+	}
+
+	void UpdateScore(int value) {
+		score += value;
+	}
+
+	void UpdatePosition(int newX, int newY, int newWidth, int newHeight) {
+		x = newX;
+		y = newY;
+		w = newWidth;
+		h = newHeight;
+	}
+};
 
 /*
 float PathLength() {
@@ -217,6 +246,7 @@ public:
 */
 
 AStar astar;
+GameInfoPanel panel(appWidth - 120, y + h/2, 110, h/2);
 
 void Display() {
 	glClearColor(0, 0, 0, 1);
@@ -227,6 +257,7 @@ void Display() {
 	glDisable(GL_DEPTH_TEST);
 	UseDrawShader(ScreenMode());
 	astar.Draw(); // a-star nodes
+	panel.Draw();
 	glFlush();
 }
 
@@ -243,7 +274,14 @@ void MouseButton(float xmouse, float ymouse, bool left, bool down) {
 	}
 }
 
-void Resize(int width, int height) { glViewport(0, 0, width, height); }
+void Resize(int width, int height) { 
+	glViewport(0, 0, width, height); 
+	w = width - 150;
+	h = height - 40;
+	dx = (float)w / NCOLS;
+	dy = (float)h / NROWS;
+	panel.UpdatePosition(width - 120, y + h / 2, 110, h / 2);
+}
 
 int main(int ac, char **av) {
 	GLFWwindow *w = InitGLFW(100, 100, appWidth, appHeight, "RoadRealm");
