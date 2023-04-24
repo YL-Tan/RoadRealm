@@ -49,8 +49,8 @@
 
 using std::vector;
 
-#define	NROWS 100
-#define	NCOLS 100
+#define	NROWS 16
+#define	NCOLS 14
 
 vec3	wht(1,1,1), blk(0,0,0), gry(.5,.5,.5), red(1,0,0), grn(0,1,0), blu(0, 0, 1),
 		dkgrn(0,.6f,0), yel(1,1,0), cyn(0,1,1), mrn(.7f, 0, 0), dkcyn(0,.5f,.5f), org(1,.55f, 0), prp(.8f,.1f,.5f);
@@ -291,9 +291,7 @@ void Display() {
 
 void MouseButton(float xmouse, float ymouse, bool left, bool down) {
 	if (down) {
-        // capture
 		int col = (int) ((xmouse-x)/dx), row = (int) ((ymouse-y)/dy);
-        //map -> array of nodes/cells/boxes
 		astar.nodes[row][col].blocked = !astar.nodes[row][col].blocked;
 		// reset astar nodes
 		for (int row = 0; row < NROWS; row++)
