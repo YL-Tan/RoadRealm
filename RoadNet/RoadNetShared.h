@@ -1,6 +1,5 @@
-//
-// Created by EdwinPc on 4/24/2023.
-//
+// RoadNetShared.h
+// Team 8
 
 #ifndef ROADREALM_ROADNETSHARED_H
 #define ROADREALM_ROADNETSHARED_H
@@ -24,7 +23,8 @@ int GRID_W = GLOBAL_W * 0.75, DISP_W = GLOBAL_W - (GLOBAL_W * 0.10); // +  150;
 float DX = (float) GRID_W / NCOLS, DY = (float) GLOBAL_H / NROWS;
 
 const vec3 WHITE(1, 1, 1), BLACK(0, 0, 0), GREY(.5, .5, .5), RED(1, 0, 0),
-        GREEN(0, 1, 0), BLUE(0, 0, 1), YELLOW(1, 1, 0), ORANGE(1, .55f, 0), PURPLE(.8f, .1f, .5f), CYAN(0, 1, 1);
+        GREEN(0, 1, 0), BLUE(0, 0, 1), YELLOW(1, 1, 0),
+        ORANGE(1, .55f, 0), PURPLE(.8f, .1f, .5f), CYAN(0, 1, 1);
 
 class Grid {
 public:

@@ -1,6 +1,5 @@
-//
-// Created by EdwinPc on 4/24/2023.
-//
+// AStar.h
+// Team 8
 
 #ifndef ROADREALM_ASTAR_H
 #define ROADREALM_ASTAR_H
@@ -17,6 +16,7 @@ struct Node {
 class AStar {
 private:
     Grid start, goal;
+
     bool LowestIndex(Grid &lowest) {
         bool found = false;
         float low = FLT_MAX;
@@ -32,8 +32,10 @@ private:
             }
         return found;
     }
+
 public:
     Node nodes[NROWS][NCOLS];
+
     int ReconstructPath(Grid gridStart, vector<Grid> &path) {
         path.resize(0);
         path.push_back(gridStart);
