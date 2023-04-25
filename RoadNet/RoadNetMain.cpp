@@ -1,5 +1,7 @@
 // RoadNetMain.cpp - 2D road network planning game
-// Team 8
+// Team 8 (Edwin Kaburu, Vincent Marklynn, Yong Long Tan)
+// NOTE: Before starting up the game, please ensure to include:
+//       GLXtras.cpp, Draw.cpp, IO.cpp, Letters.cpp, Text.cpp
 
 #include <glad.h>
 #include <GLFW/glfw3.h>
@@ -10,7 +12,7 @@
 #include <ctime>
 #include <vector>
 #include "AStar.h"
-
+#include <string>
 
 using namespace std;
 
@@ -66,30 +68,31 @@ void Display() {
      Text(GLOBAL_W , GLOBAL_H , WHITE, 12.0f, displayText.c_str());
      cout << "Grid Display W: " <<  (GRID_W) << " H: " <<  (GLOBAL_H) << "\n";
      cout << "Info Display W: " <<  (GLOBAL_W) << " H: " <<  (GLOBAL_H) << "\n";*/
-/*
-      for(string display : messageLists)
-      {
-          Text(DISP_W , GLOBAL_H , WHITE, 10.0f, display.c_str());
-      }*/
-    //Text(350,350, WHITE, 12.0f, displayText.c_str());
+     /*
+           for(string display : messageLists)
+           {
+               Text(DISP_W , GLOBAL_H , WHITE, 10.0f, display.c_str());
+           }*/
+           //Text(350,350, WHITE, 12.0f, displayText.c_str());
 
     glFlush();
 }
 
 void MouseButton(float xmouse, float ymouse, bool left, bool down) {
     if (down) {
-        int col = (int) ((xmouse - X_POS) / DX), row = (int) ((ymouse - Y_POS) / DY);
+        int col = (int)((xmouse - X_POS) / DX), row = (int)((ymouse - Y_POS) / DY);
         if (col < NCOLS && row < NROWS) {
             aStar.nodes[row][col].roadPlaced = !aStar.nodes[row][col].roadPlaced;
             // reset astar nodes
             for (int row = 0; row < NROWS; row++)
                 for (int col = 0; col < NCOLS; col++) {
-                    Node &n = aStar.nodes[row][col];
+                    Node& n = aStar.nodes[row][col];
                     n.open = n.closed = false;
                 }
             infoPanel.mouseSpaceDisp = "Mouse Click: X" + to_string(col) + " Y " + to_string(row);
             infoPanel.errorMsg = "Success";
-        } else {
+        }
+        else {
             infoPanel.errorMsg = "Out Of Grid Mouse Click";
         }
 
@@ -110,7 +113,7 @@ void UpdateAppVariables(int width, int height) {
     GRID_W = GLOBAL_W * 0.75, DISP_W = GLOBAL_W - (GLOBAL_W * 0.10); //GLOBAL_W - 150; // DISP_W = GLOBAL_W - GRID_W;
 
     // Update Difference of X-Axis AND Y-Axis
-    DX = (float) GRID_W / NCOLS, DY = (float) GLOBAL_H / NROWS;
+    DX = (float)GRID_W / NCOLS, DY = (float)GLOBAL_H / NROWS;
 }
 
 void Resize(int width, int height) {
@@ -132,8 +135,8 @@ void FormulateFps() {
     FPS = FPS + 1;
 }
 
-int main(int ac, char **av) {
-    GLFWwindow *w = InitGLFW(100, 100, APP_WIDTH, APP_HEIGHT, "RoadRealm");
+int main(int ac, char** av) {
+    GLFWwindow* w = InitGLFW(100, 100, APP_WIDTH, APP_HEIGHT, "RoadRealm");
     RegisterMouseButton(MouseButton);
     RegisterResize(Resize);
 
