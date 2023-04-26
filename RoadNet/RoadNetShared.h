@@ -28,6 +28,31 @@ const vec3 WHITE(1, 1, 1), BLACK(0, 0, 0), GREY(.5, .5, .5), RED(1, 0, 0),
 
 float pathLength;
 
+struct InfoPanel {
+    string mouseSpaceDisp;
+    string mouseSpaceMoveDisp;
+    string gridWinDim;
+    string infoWinDim;
+    string appWinDisp;
+    string gridPrimitiveDim;
+    string errorMsg;
+    double fpsDisp = 0;
+
+    void InfoDisplay() {
+        Text(DISP_W, GLOBAL_H, WHITE, 10.0f, mouseSpaceDisp.c_str());
+        Text(DISP_W, GLOBAL_H - 20, ORANGE, 10.0f, mouseSpaceMoveDisp.c_str());
+
+        Text(DISP_W, GLOBAL_H - 40, WHITE, 10.0f, gridWinDim.c_str());
+        Text(DISP_W, GLOBAL_H - 60, WHITE, 10.0f, infoWinDim.c_str());
+        Text(DISP_W, GLOBAL_H - 80, WHITE, 10.0f, appWinDisp.c_str());
+
+        Text(DISP_W, GLOBAL_H - 100, GREEN, 10.0f, gridPrimitiveDim.c_str());
+
+        Text(DISP_W, GLOBAL_H - 120, PURPLE, 10.0f, errorMsg.c_str());
+        Text(DISP_W, GLOBAL_H - 140, WHITE, 10.0f, to_string(fpsDisp).c_str());
+    }
+};
+
 class Grid {
 public:
     int row = -1, col = -1;
@@ -91,7 +116,7 @@ vec2 PointOnPath(float dist) {
 }
 
 class Bot {
-    // represents a moving agent on the grid. It has methods for updating the agent's position 
+    // represents a moving agent on the grid. It has methods for updating the agent's position
     // along the computed path and drawing the agent on the screen.
 public:
     float speed = -.5, t = 1;

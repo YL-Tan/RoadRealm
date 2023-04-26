@@ -13,39 +13,20 @@
 #include <vector>
 #include "AStar.h"
 #include <string>
+#include <set>
 
 using namespace std;
 
-struct InfoPanel {
-    string mouseSpaceDisp;
-    string gridWinDim;
-    string infoWinDim;
-    string appWinDisp;
-    string gridPrimitiveDim;
-    string errorMsg;
-    double fpsDisp = 0;
-
-    void InfoDisplay() {
-        Text(DISP_W, GLOBAL_H, WHITE, 10.0f, mouseSpaceDisp.c_str());
-
-        Text(DISP_W, GLOBAL_H - 20, WHITE, 10.0f, gridWinDim.c_str());
-        Text(DISP_W, GLOBAL_H - 40, WHITE, 10.0f, infoWinDim.c_str());
-        Text(DISP_W, GLOBAL_H - 60, WHITE, 10.0f, appWinDisp.c_str());
-
-        Text(DISP_W, GLOBAL_H - 80, GREEN, 10.0f, gridPrimitiveDim.c_str());
-
-        Text(DISP_W, GLOBAL_H - 100, PURPLE, 10.0f, errorMsg.c_str());
-        Text(DISP_W, GLOBAL_H - 120, WHITE, 10.0f, to_string(fpsDisp).c_str());
-    }
-};
+unsigned int NUM_OF_FRAMES = 0;
+double INITIAL_TIME = 0;
+bool GLOBAL_MOUSE_DOWN = false;
+set<vec2> DRAGGED_CELLS;
 
 InfoPanel infoPanel;
-unsigned int FPS = 0;
-double INITIAL_TIME = 0;
-
 time_t oldtime = clock();
 Grid start(0, 0), stop(2, 2);
 Bot botA(-.2f, .4f, 0); // , botB(.3f, .8f, 1);
+
 AStar aStar;
 
 // Display
@@ -65,6 +46,7 @@ void Display() {
     glEnable(GL_LINE_SMOOTH);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_DEPTH_TEST);
+
     UseDrawShader(ScreenMode());
     aStar.Draw();
     //aStar.DrawPaths(1.5f, ORANGE);
@@ -80,49 +62,104 @@ void Display() {
 
     infoPanel.InfoDisplay();
 
-    // Text(DISP_W , GLOBAL_H , WHITE, 10.0f, infoPanel.ToString().c_str());
-
-    /* string displayText = "This is a Text";
-     Text(GLOBAL_W , GLOBAL_H , WHITE, 12.0f, displayText.c_str());
-     cout << "Grid Display W: " <<  (GRID_W) << " H: " <<  (GLOBAL_H) << "\n";
-     cout << "Info Display W: " <<  (GLOBAL_W) << " H: " <<  (GLOBAL_H) << "\n";*/
-     /*
-           for(string display : messageLists)
-           {
-               Text(DISP_W , GLOBAL_H , WHITE, 10.0f, display.c_str());
-           }*/
-           //Text(350,350, WHITE, 12.0f, displayText.c_str());
-
     glFlush();
+}
+
+void ToggleCellBinaryState(int col, int row)
+{
+    if (col < NCOLS && row < NROWS) {
+        aStar.nodes[row][col].roadPlaced = !aStar.nodes[row][col].roadPlaced;
+        // reset astar nodes
+        for (int row = 0; row < NROWS; row++)
+            for (int col = 0; col < NCOLS; col++) {
+                Node& n = aStar.nodes[row][col];
+                n.open = n.closed = false;
+            }
+        infoPanel.mouseSpaceDisp = "Mouse Click: X" + to_string(col) + " Y " + to_string(row);
+        infoPanel.errorMsg = "Success";
+    }
+    else {
+        infoPanel.errorMsg = "Out Of Grid Mouse Click";
+    }
+}
+bool DraggedCellExists(int col, int row)
+{
+    for(vec2 cell : DRAGGED_CELLS)
+    {
+        if(cell.x == floor(col) && cell.y == floor(row))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+bool AccumulateDraggedCell(float xMouse, float yMouse)
+{
+    int col = (int)((xMouse - X_POS) / DX), row = (int)((yMouse - Y_POS) / DY);
+
+    if(!DraggedCellExists(col,row))
+    {
+        DRAGGED_CELLS.insert(vec2(col, row));
+        return true;
+    }
+    return false;
+}
+bool AccumulateDraggedCell(int col, int row)
+{
+    if(!DraggedCellExists(col,row))
+    {
+        DRAGGED_CELLS.insert(vec2(col, row));
+        return true;
+    }
+    return false;
 }
 
 void MouseButton(float xmouse, float ymouse, bool left, bool down) {
     if (down) {
-        int col = (int)((xmouse - X_POS) / DX), row = (int)((ymouse - Y_POS) / DY);
-        if (col < NCOLS && row < NROWS) {
-            aStar.nodes[row][col].roadPlaced = !aStar.nodes[row][col].roadPlaced;
-            // reset astar nodes
-            for (int row = 0; row < NROWS; row++)
-                for (int col = 0; col < NCOLS; col++) {
-                    Node& n = aStar.nodes[row][col];
-                    n.open = n.closed = false;
-                }
-            infoPanel.mouseSpaceDisp = "Mouse Click: X" + to_string(col) + " Y " + to_string(row);
-            infoPanel.errorMsg = "Success";
-        }
-        else {
-            infoPanel.errorMsg = "Out Of Grid Mouse Click";
-        }
+        GLOBAL_MOUSE_DOWN = true;
+
+        AccumulateDraggedCell(xmouse, ymouse);
+
         // compute new path
         aStar.ComputePath(start, stop);
         aStar.ReconstructPath(aStar.goal, path);
         pathLength = PathLength();
+    }
+    else
+    {
+        GLOBAL_MOUSE_DOWN = false;
+        for(vec2 cell : DRAGGED_CELLS)
+        {
+            ToggleCellBinaryState((int)cell.x, (int)cell.y);
+        }
+        DRAGGED_CELLS.clear();
+    }
+}
 
-        // Debug
-        /*messageLists.clear();
-        string mouseDisplay = "Mouse Click: X" + to_string(col) + " Y " + to_string(row);
-        messageLists.push_back(mouseDisplay);
-        cout << mouseDisplay << "\n";*/
+void MouseMove(float x, float y, bool leftDown, bool rightDown )
+{
+    int col = (int)((x - X_POS) / DX), row = (int)((y - Y_POS) / DY);
+    infoPanel.mouseSpaceMoveDisp = "Mouse Move: X" + to_string(col) + " Y " + to_string(row);
+
+    if (GLOBAL_MOUSE_DOWN)
+    {
+        bool debugStatus = AccumulateDraggedCell(col, row);
+        if(debugStatus)
+        {
+            cout << "\n----- Dragged Cell Collection---------\n";
+            for(vec2 cell : DRAGGED_CELLS)
+            {
+                cout << cell.x << "\t" << cell.y << "\n";
+            }
+        }
+    }
+    else
+    {
+        for(vec2 cell : DRAGGED_CELLS)
+        {
+            ToggleCellBinaryState((int)cell.x, (int)cell.y);
+        }
+        DRAGGED_CELLS.clear();
     }
 }
 
@@ -144,36 +181,28 @@ void Resize(int width, int height) {
     glFlush();
 }
 
-void FormulateFps() {
-    double dif = glfwGetTime() - INITIAL_TIME;
-    if (dif >= 1.0f) {
-        cout << "FPS" << FPS << "\n";
-        infoPanel.fpsDisp = FPS;
-        // Reset Fps Counter
-        FPS = 0;
-        // Set Current Time as Initial
-        INITIAL_TIME = glfwGetTime();
-    }
-    FPS = FPS + 1;
-}
 
 int main(int ac, char** av) {
     GLFWwindow* w = InitGLFW(100, 100, APP_WIDTH, APP_HEIGHT, "RoadRealm");
+
     RegisterMouseButton(MouseButton);
+    RegisterMouseMove(MouseMove);
     RegisterResize(Resize);
 
     INITIAL_TIME = glfwGetTime();
+
     // path-finding
     aStar.ComputePath(start, stop);
     aStar.ReconstructPath(aStar.goal, path);
     pathLength = PathLength();
+
     while (!glfwWindowShouldClose(w)) {
         Update();
-        FormulateFps();
+        // FPS Calculator
+        infoPanel.fpsDisp = NUM_OF_FRAMES / (glfwGetTime() - INITIAL_TIME);
         Display();
         glfwSwapBuffers(w);
         glfwPollEvents();
+        NUM_OF_FRAMES += 1;
     }
-    //double endTime = glfwGetTime();
-    //cout << currentTime << "\t" << endTime << " = " << (endTime - currentTime);
 }
