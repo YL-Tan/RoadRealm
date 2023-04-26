@@ -78,7 +78,7 @@ public:
 	bool operator==(Index &i) { return i.row == row && i.col == col; }
 };
 
-Index start(0, 0), stop(14, 12);
+Index start(0, 0), stop(2, 2);
 vector<Index> path;
 float pathLength;
 
@@ -165,34 +165,34 @@ public:
 		// initialize
 		start = s;
 		goal = g;
-		Node &n = nodes[start.row][start.col];
+		Node& n = nodes[start.row][start.col];
 		n.g = 0;
 		n.h = start.DistanceTo(goal);
-		n.f = n.h+n.g;
+		n.f = n.h + n.g;
 		n.open = true;
 		// loop
 		Index xIndex;
 		while (LowestIndex(xIndex)) {
 			if (xIndex.col == goal.col && xIndex.row == goal.row)
 				return true;
-			Node &x = nodes[xIndex.row][xIndex.col];
+			Node& x = nodes[xIndex.row][xIndex.col];
 			// remove x from openSet, add to closedSet
 			x.open = false;
 			x.closed = true;
 			// for each y in neighbor_nodes(x)
-			for (int col = xIndex.col-1; col <= xIndex.col+1; col++)
-				for (int row = xIndex.row-1; row <= xIndex.row+1; row++) {
+			for (int col = xIndex.col - 1; col <= xIndex.col + 1; col++)
+				for (int row = xIndex.row - 1; row <= xIndex.row + 1; row++) {
 					Index yIndex(row, col);
 					// test all eight neighbors, but not self
 					if (yIndex == xIndex || !yIndex.Valid())
 						continue;
-					// skip closed nodes
-					Node &y = nodes[row][col];
-					if (y.closed || y.blocked)
+					// skip non-blue nodes (non-roads)
+					Node& y = nodes[row][col];
+					if (y.closed || !y.blocked) // Changed condition here
 						continue;
 					// tentative_g_score := g_score[x] + dist_between(x,y)
 					bool tentativeIsBetter;
-					float tentativeG = x.g+xIndex.DistanceTo(yIndex);
+					float tentativeG = x.g + xIndex.DistanceTo(yIndex);
 					if (!y.open) {
 						y.open = true;
 						y.h = yIndex.DistanceTo(goal);
@@ -204,13 +204,14 @@ public:
 					if (tentativeIsBetter) {
 						y.from = xIndex;
 						y.g = tentativeG;
-						y.f = y.g+y.h;
+						y.f = y.g + y.h;
 					}
 				} // end for row loop
 
 		} // end while(LowestIndex)
 		return false;
 	} // end ComputePath
+
 	void DrawPaths(float width, vec3 color) {
 		for (int row = 0; row < NROWS; row++)
 			for (int col = 0; col < NCOLS; col++) {
@@ -233,6 +234,13 @@ public:
 		if (goal.row > -1)
 			Disk(vec2(x+(goal.col+.5)*dx, y+(goal.row+.5)*dy), 20, blu);
 	}
+	void TurnAllSquaresBlue() {
+		for (int row = 0; row < NROWS; row++) {
+			for (int col = 0; col < NCOLS; col++) {
+				nodes[row][col].blocked = true;
+			}
+		}
+	}
 };
 
 class Bot {
@@ -240,8 +248,9 @@ class Bot {
 // along the computed path and drawing the agent on the screen.
 public:
 	float speed = -.5, t = 1;
+	int idBot = 0;
 	Bot() { }
-	Bot(float s, float tt) : t(tt), speed(s) { }
+	Bot(float s, float tt, int id) : t(tt), speed(s), idBot(id) { }
 	void Update(float dt) {
 		t += dt*speed;
 		if (t < 0 || t > 1) speed = -speed;
@@ -250,11 +259,12 @@ public:
 	void Draw(vec3 color) {
 		vec2 p = PointOnPath(t*pathLength);
 		Disk(vec2(x+(p.x+.5)*dx, y+(p.y+.5)*dy), 20, color);
+		std::cout << "id= " << idBot << " x = " << x + (p.x + .5) * dx << " y = " << y + (p.y + .5) * dy << std::endl;
 	}
 };
 
+Bot botA(-.2f, .4f, 0), botB(.3f, .8f, 1);
 AStar astar;
-Bot botA(-.5f, .2f), botB(.3f, .8f);
 
 // Display
 // updating the state of the application, and rendering the graphics.
@@ -316,6 +326,7 @@ int main(int ac, char **av) {
 	RegisterMouseButton(MouseButton);
 	RegisterResize(Resize);
 	// set blocks
+	/*
 	int blocks[][2] = {
 		// verticals
 		{2, 2}, {3, 2}, {4, 2},
@@ -327,7 +338,8 @@ int main(int ac, char **av) {
 		{13, 10}, {13, 11}
 	};
 	for (int i = 0; i < sizeof(blocks)/(2*sizeof(int)); i++)
-		astar.nodes[blocks[i][0]][blocks[i][1]].blocked = true;
+		astar.nodes[blocks[i][0]][blocks[i][1]].blocked = false;
+	*/
 	// path-finding
 	astar.ComputePath(start, stop);
 	astar.ReconstructPath(astar.goal, path);
