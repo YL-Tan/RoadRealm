@@ -16,8 +16,6 @@
 
 using namespace std;
 
-AStar aStar;
-
 struct InfoPanel {
     string mouseSpaceDisp;
     string gridWinDim;
@@ -45,6 +43,21 @@ InfoPanel infoPanel;
 unsigned int FPS = 0;
 double INITIAL_TIME = 0;
 
+time_t oldtime = clock();
+Grid start(0, 0), stop(2, 2);
+Bot botA(-.2f, .4f, 0); // , botB(.3f, .8f, 1);
+AStar aStar;
+
+// Display
+// updating the state of the application, and rendering the graphics.
+void Update() {
+    time_t now = clock();
+    float dt = (float)(oldtime - now) / CLOCKS_PER_SEC;
+    oldtime = now;
+    botA.Update(dt);
+    // botB.Update(dt);
+}
+
 void Display() {
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -54,6 +67,11 @@ void Display() {
     glDisable(GL_DEPTH_TEST);
     UseDrawShader(ScreenMode());
     aStar.Draw();
+    //aStar.DrawPaths(1.5f, ORANGE);
+    DrawPath(path, 3.5f, WHITE);
+    // bots
+    botA.Draw(RED);
+    //botB.Draw(GREEN);
 
     infoPanel.gridWinDim = "Grid Window: W: " + to_string(GRID_W) + " H: " + to_string(GLOBAL_H);
     infoPanel.infoWinDim = "Info Window: W: " + to_string(DISP_W) + " H: " + to_string(GLOBAL_H);
@@ -95,6 +113,10 @@ void MouseButton(float xmouse, float ymouse, bool left, bool down) {
         else {
             infoPanel.errorMsg = "Out Of Grid Mouse Click";
         }
+        // compute new path
+        aStar.ComputePath(start, stop);
+        aStar.ReconstructPath(aStar.goal, path);
+        pathLength = PathLength();
 
         // Debug
         /*messageLists.clear();
@@ -141,8 +163,12 @@ int main(int ac, char** av) {
     RegisterResize(Resize);
 
     INITIAL_TIME = glfwGetTime();
-
+    // path-finding
+    aStar.ComputePath(start, stop);
+    aStar.ReconstructPath(aStar.goal, path);
+    pathLength = PathLength();
     while (!glfwWindowShouldClose(w)) {
+        Update();
         FormulateFps();
         Display();
         glfwSwapBuffers(w);

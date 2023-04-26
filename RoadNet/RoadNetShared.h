@@ -26,6 +26,8 @@ const vec3 WHITE(1, 1, 1), BLACK(0, 0, 0), GREY(.5, .5, .5), RED(1, 0, 0),
         GREEN(0, 1, 0), BLUE(0, 0, 1), YELLOW(1, 1, 0),
         ORANGE(1, .55f, 0), PURPLE(.8f, .1f, .5f), CYAN(0, 1, 1);
 
+float pathLength;
+
 class Grid {
 public:
     int row = -1, col = -1;
@@ -46,6 +48,7 @@ public:
     bool operator==(Grid &i) { return i.row == row && i.col == col; }
 };
 
+vector<Grid> path;
 
 void DrawVertex(float row, float col) {
     Disk(vec2(X_POS + (col + .5) * DX, Y_POS + (row + .5) * DY), 6, BLUE);
@@ -64,4 +67,45 @@ void DrawRectangle(int x, int y, int w, int h, vec3 col) {
     Quad(x, y, x, y + h, x + w, y + h, x + w, y, true, col);
 }
 
+float PathLength() {
+    float len = 0;
+    for (size_t i = 1; i < path.size(); i++)
+        len += path[i].DistanceTo(path[i - 1]);
+    return len;
+}
+
+vec2 PointOnPath(float dist) {
+    float accumDist = 0;
+    Grid i1 = path[0];
+    for (size_t i = 1; i < path.size(); i++) {
+        Grid i2 = path[i];
+        float d = i1.DistanceTo(i2);
+        accumDist += d;
+        if (accumDist >= dist) {
+            float alpha = (accumDist - dist) / d;
+            return vec2(i2.col + alpha * (i1.col - i2.col), i2.row + alpha * (i1.row - i2.row));
+        }
+        i1 = i2;
+    }
+    return vec2(i1.col, i1.row);
+}
+
+class Bot {
+    // represents a moving agent on the grid. It has methods for updating the agent's position 
+    // along the computed path and drawing the agent on the screen.
+public:
+    float speed = -.5, t = 1;
+    int idBot = 0;
+    Bot() { }
+    Bot(float s, float tt, int id) : t(tt), speed(s), idBot(id) { }
+    void Update(float dt) {
+        t += dt * speed;
+        if (t < 0 || t > 1) speed = -speed;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+    }
+    void Draw(vec3 color) {
+        vec2 p = PointOnPath(t * pathLength);
+        Disk(vec2(X_POS + (p.x + .5) * DX, Y_POS + (p.y + .5) * DY), 20, color);
+    }
+};
 #endif //ROADREALM_ROADNETSHARED_H
