@@ -7,6 +7,7 @@
 #include <iostream>
 #include <vector>
 #include "Draw.h"
+#include <string>
 #include "GLXtras.h"
 
 using namespace std;
