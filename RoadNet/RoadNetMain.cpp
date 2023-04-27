@@ -119,11 +119,6 @@ void MouseButton(float xmouse, float ymouse, bool left, bool down) {
         GLOBAL_MOUSE_DOWN = true;
 
         AccumulateDraggedCell(xmouse, ymouse);
-
-        // compute new path
-        aStar.ComputePath(start, stop);
-        aStar.ReconstructPath(aStar.goal, path);
-        pathLength = PathLength();
     }
     else
     {
@@ -134,6 +129,10 @@ void MouseButton(float xmouse, float ymouse, bool left, bool down) {
         }
         DRAGGED_CELLS.clear();
     }
+    // compute new path
+    aStar.ComputePath(start, stop);
+    aStar.ReconstructPath(aStar.goal, path);
+    pathLength = PathLength();
 }
 
 void MouseMove(float x, float y, bool leftDown, bool rightDown )
