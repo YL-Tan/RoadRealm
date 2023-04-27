@@ -38,6 +38,7 @@ struct InfoPanel {
     string gridPrimitiveDim;
     string errorMsg;
     double fpsDisp = 0;
+    int timeSinceStart = 0;
 
     void InfoDisplay() {
         Text(DISP_W, GLOBAL_H, WHITE, 10.0f, mouseSpaceDisp.c_str());
@@ -51,6 +52,8 @@ struct InfoPanel {
 
         Text(DISP_W, GLOBAL_H - 120, PURPLE, 10.0f, errorMsg.c_str());
         Text(DISP_W, GLOBAL_H - 140, WHITE, 10.0f, to_string(fpsDisp).c_str());
+
+        Text(DISP_W, GLOBAL_H - 160, WHITE, 10.0f, to_string(timeSinceStart).c_str());
     }
 };
 

@@ -199,6 +199,7 @@ int main(int ac, char** av) {
         Update();
         // FPS Calculator
         infoPanel.fpsDisp = NUM_OF_FRAMES / (glfwGetTime() - INITIAL_TIME);
+        infoPanel.timeSinceStart = glfwGetTime();
         Display();
         glfwSwapBuffers(w);
         glfwPollEvents();
