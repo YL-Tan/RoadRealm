@@ -169,14 +169,14 @@ vec2 PointOnPath(float dist, vector<NodePosition> &path) {
 }
 
 
-struct Bot {
+struct Vehicle {
     float speed = -.5, t = 1;
-    int idBot = 0;
-    vec3 botColor;
-    vector<NodePosition> botPath;
+    int idVehicle = 0;
+    vec3 vehicleColor;
+    vector<NodePosition> vehiclePath;
 
-    Bot() { }
-    Bot(float s, float tt, int id, vec3 color) : t(tt), speed(s), idBot(id), botColor(color) { }
+    Vehicle() { }
+    Vehicle(float s, float tt, int id, vec3 color) : t(tt), speed(s), idVehicle(id), vehicleColor(color) { }
     void Update(float dt) {
         t += dt * speed;
         if (t < 0 || t > 1) speed = -speed;
@@ -184,16 +184,16 @@ struct Bot {
     }
     void Draw() {
 
-        if(!botPath.empty())
+        if(!vehiclePath.empty())
         {
-            // Draw Path Using Bot Color
-            DrawPath(botPath, 2.5f, botColor);
+            // Draw Path Using Vehicle Color
+            DrawPath(vehiclePath, 2.5f, vehicleColor);
 
-            float dist = t * PathLength(botPath);
-            vec2 p = PointOnPath(dist, botPath);
+            float dist = t * PathLength(vehiclePath);
+            vec2 p = PointOnPath(dist, vehiclePath);
 
             // Draw Disk Dot
-            Disk(vec2(X_POS + (p.x + .5) * DX, Y_POS + (p.y + .5) * DY), 20, botColor);
+            Disk(vec2(X_POS + (p.x + .5) * DX, Y_POS + (p.y + .5) * DY), 20, vehicleColor);
         }
     }
 };

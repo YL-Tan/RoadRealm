@@ -1,4 +1,4 @@
-// AStar.h
+// Grid.h
 // Team 8
 
 #ifndef ROADREALM_ASTAR_H

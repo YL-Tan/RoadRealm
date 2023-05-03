@@ -11,7 +11,7 @@
 #include <limits>
 #include <ctime>
 #include <vector>
-#include "AStar.h"
+#include "Grid.h"
 #include <string>
 #include <set>
 
@@ -29,18 +29,18 @@ InfoPanel infoPanel;
 
 time_t oldtime = clock();
 
-// Bot botA(-.2f, .4f, 0, BLUE);
+// Vehicle vehicleA(-.2f, .4f, 0, BLUE);
 
-vector<Bot> BOTS_COLLECTION;
+vector<Vehicle> VEHICLES_COLLECTION;
 
 void Update() {
     time_t now = clock();
     float dt = (float) (oldtime - now) / CLOCKS_PER_SEC;
     oldtime = now;
 
-    //botA.Update(dt);
+    //VehicleA.Update(dt);
 
-    for(Bot &runner : BOTS_COLLECTION)
+    for(Vehicle&runner : VEHICLES_COLLECTION)
     {
         runner.Update(dt);
     }
@@ -58,7 +58,7 @@ int CombineDigits(int leftDigit, int rightDigit) {
     return (leftDigit * GetHighestTenthPow(rightDigit)) + rightDigit;
 }
 
-void ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, Bot &runner) {
+void ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, Vehicle &runner) {
     if (col < NCOLS && row < NROWS) {
         // Get Potential Index, Will Explain On Tuesday,
         // [0,0] bottom Left
@@ -66,8 +66,8 @@ void ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, Bot &runner
 
         Node node = gridPrimitive.NodeHandler(potentialIndex);
 
-        runner.botPath.push_back(node.currentPos);
-        // tempBotPath.push_back(node.currentPos);
+        runner.vehiclePath.push_back(node.currentPos);
+        // tempVehiclePath.push_back(node.currentPos);
 
         infoPanel.mouseSpaceDisp = "Mouse Click: X" + to_string(col) + " Y " + to_string(row);
         infoPanel.errorMsg = "Success";
@@ -78,13 +78,13 @@ void ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, Bot &runner
 
 void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
     if (!GLOBAL_MOUSE_DOWN && !PREV_DRAGGED_CELLS.empty()) {
-        Bot runner(-.2f, .4f, 0, GetRandomColor());
+        Vehicle runner(-.2f, .4f, 0, GetRandomColor());
 
         for (vec2 cell: PREV_DRAGGED_CELLS) {
             ToggleNodeState((int) cell.x, (int) cell.y, gridPrimitive, runner);
         }
-        // Add to Bots Collections
-        BOTS_COLLECTION.push_back(runner);
+        // Add to Vehicles Collections
+        VEHICLES_COLLECTION.push_back(runner);
 
         // Clear
         PREV_DRAGGED_CELLS.clear();
@@ -168,11 +168,7 @@ void Display(GridPrimitive gridPrimitive) {
 
     gridPrimitive.DrawGrid();
 
-    // botA.Draw(tempBotPath);
-    /*botA.botPath = tempBotPath;
-    botA.Draw();*/
-
-    for(Bot &runner: BOTS_COLLECTION)
+    for(Vehicle&runner: VEHICLES_COLLECTION)
     {
         runner.Draw();
     }
