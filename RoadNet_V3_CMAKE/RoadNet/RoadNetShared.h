@@ -29,7 +29,7 @@ const vec3 WHITE(1, 1, 1), BLACK(0, 0, 0), GREY(.5, .5, .5), RED(1, 0, 0),
         ORANGE(1, .55f, 0), PURPLE(.8f, .1f, .5f), CYAN(0, 1, 1);
 
 enum NodeStates {
-    OPEN, CLOSED_ROAD, CLOSED_HOUSE, CLOSED_FACTORY
+    OPEN, CLOSED_ROAD, CLOSED_HOUSE, CLOSED_FACTORY, DEBUG_OUT_BOUNDS
 };
 
 enum DebugColorIndex
@@ -50,6 +50,7 @@ struct InfoPanel {
     string appWinDisp;
     string gridPrimitiveDim;
     string errorMsg;
+    string logsMsg;
     double fpsDisp = 0;
 
     void InfoDisplay() {
@@ -63,7 +64,10 @@ struct InfoPanel {
         Text(DISP_W, GLOBAL_H - 100, GREEN, 10.0f, gridPrimitiveDim.c_str());
 
         Text(DISP_W, GLOBAL_H - 120, PURPLE, 10.0f, errorMsg.c_str());
-        Text(DISP_W, GLOBAL_H - 140, WHITE, 10.0f, to_string(fpsDisp).c_str());
+
+        Text(DISP_W, GLOBAL_H - 140, YELLOW, 10.0f, logsMsg.c_str());
+
+        Text(DISP_W, GLOBAL_H - 160, WHITE, 10.0f, to_string(fpsDisp).c_str());
     }
 };
 
@@ -88,13 +92,17 @@ struct NodePosition {
                     (int) DX - 1,   (int) DY - 1);
     }
 
-    bool AlignmentPosMatches(int c, int r)
+    bool AlignmentPosMatches(int r, int c)
     {
         if(row == r && col == c)
         {
             return true;
         }
         return false;
+    }
+    bool AlignmentPosMatches(NodePosition comparePos)
+    {
+        return AlignmentPosMatches(comparePos.row, comparePos.col);
     }
 
     bool operator==(NodePosition &i) { return i.row == row && i.col == col; }
@@ -168,34 +176,80 @@ vec2 PointOnPath(float dist, vector<NodePosition> &path) {
     return vec2(i1.col, i1.row);
 }
 
+int GetHighestTenthPow(int digit) {
+    int highestDeciPow = 10;
+    while (digit >= highestDeciPow) {
+        highestDeciPow *= 10;
+    }
+    return highestDeciPow;
+}
+
+int CombineDigits(int leftDigit, int rightDigit) {
+    return (leftDigit * GetHighestTenthPow(rightDigit)) + rightDigit;
+}
+
+struct Node {
+    NodePosition currentPos;
+    vec3 color = WHITE;
+    vec3 overlayColor = WHITE;
+    NodeStates currentState = OPEN;
+
+    Node() {}
+
+    Node(int row, int col) {
+        currentPos.row = row;
+        currentPos.col = col;
+    }
+};
+
+struct RoadPathLinker
+{
+    vector<NodePosition> roadPath;
+    bool isLinked = false;
+    vec3 color;
+};
 
 struct Vehicle {
     float speed = -.5, t = 1;
-    int idVehicle = 0;
-    vec3 vehicleColor;
-    vector<NodePosition> vehiclePath;
+    // int idVehicle = 0;
+    //vec3 vehicleColor;
+    //vector<NodePosition> vehiclePath;
+    RoadPathLinker roadPath;
 
     Vehicle() { }
-    Vehicle(float s, float tt, int id, vec3 color) : t(tt), speed(s), idVehicle(id), vehicleColor(color) { }
+    Vehicle(float s, float tt , RoadPathLinker &path)
+    {
+        this->speed = s;
+        this->t = tt;
+        this->roadPath = path;
+    }
+
+    /*Vehicle(float s, float tt, int id, vec3 color) : t(tt), speed(s), idVehicle(id), vehicleColor(color) { }*/
+
     void Update(float dt) {
         t += dt * speed;
         if (t < 0 || t > 1) speed = -speed;
         t = t < 0 ? 0 : t > 1 ? 1 : t;
     }
-    void Draw() {
+    void Draw(string &drawLogs) {
 
-        if(!vehiclePath.empty())
+        if(roadPath.isLinked)
         {
             // Draw Path Using Vehicle Color
-            DrawPath(vehiclePath, 2.5f, vehicleColor);
+            DrawPath(roadPath.roadPath, 2.5f, roadPath.color);
 
-            float dist = t * PathLength(vehiclePath);
-            vec2 p = PointOnPath(dist, vehiclePath);
+            float dist = t * PathLength(roadPath.roadPath);
+            vec2 p = PointOnPath(dist, roadPath.roadPath);
 
             // Draw Disk Dot
-            Disk(vec2(X_POS + (p.x + .5) * DX, Y_POS + (p.y + .5) * DY), 20, vehicleColor);
+            Disk(vec2(X_POS + (p.x + .5) * DX, Y_POS + (p.y + .5) * DY), 20, roadPath.color);
+
+            // Line(vec2(X_POS + (p.x + .5) * DX, Y_POS + (p.y + .5) * DY), vec2(X_POS + (p.x + 1.0) * DX, Y_POS + (p.y + 0.5) * DY),1.0f, BLUE);
+
+            drawLogs = "runner pos: " + to_string(p.x) + " " + to_string(p.y);
         }
     }
 };
+
 
 #endif //ROADREALM_ROADNETSHARED_H

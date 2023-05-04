@@ -6,31 +6,11 @@
 
 #include "RoadNetShared.h"
 
-struct Node {
-    NodePosition currentPos;
-
-    vec3 color = WHITE;
-    NodeStates currentState = OPEN;
-    // bool isOpen = true;
-
-    Node() {}
-
-    Node(int row, int col) {
-        currentPos.row = row;
-        currentPos.col = col;
-    }
-
+struct DestinationObjectives{
+    Node houseNode;
+    Node factoryNode;
+   // bool connected = false;
 };
-
-struct DefinedObjectives
-{
-    NodePosition start;
-    NodePosition end;
-    vec3 color;
-};
-
-// Grid start, goal; // Collection, vector, map, set
-vector<DefinedObjectives> objectives;
 
 class GridPrimitive {
 private:
@@ -51,7 +31,8 @@ private:
 public:
     // N * N grid's nodes/cells
     vector<Node> gridNodes = {};
-    //vector<NodePosition> gridNodeP
+
+    vector<DestinationObjectives> gridDestObjectives;
 
     GridPrimitive() {
         FormulateGrid();
@@ -62,31 +43,85 @@ public:
         nodesDefaultColor = colorInput;
     }
 
+    bool IsValidDestination(NodePosition home, NodePosition factory, int homeIndex, int factoryIndex)
+    {
+        if(homeIndex < factoryIndex)
+        {
+            for(DestinationObjectives &objectives : gridDestObjectives)
+            {
+                if(objectives.houseNode.currentPos.AlignmentPosMatches(home) && objectives.factoryNode.currentPos.AlignmentPosMatches(factory))
+                {
+                    // objectives.connected = true;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    bool AddNewObjective(int startR, int startC, int endR, int endC)
+    {
+        int startNIndex = CombineDigits(startR, startC);
+        int endNIndex = CombineDigits(endR, endC);
+
+        if(startNIndex < gridNodes.size() && endNIndex < gridNodes.size())
+        {
+            // House = Start, Factory = End
+            gridNodes.at(startNIndex).currentState = CLOSED_HOUSE;
+            gridNodes.at(endNIndex).currentState = CLOSED_FACTORY;
+
+            vec3 shrRandColor = GetRandomColor();
+
+            gridNodes.at(startNIndex).overlayColor = shrRandColor;
+            gridNodes.at(endNIndex).overlayColor = shrRandColor;
+
+            // Add To Objectives
+            gridDestObjectives.push_back({gridNodes.at(startNIndex), gridNodes.at(endNIndex)});
+            return true;
+        }
+        return false;
+    }
+
     void DrawGrid() {
         // Draw All Cells
         for (Node cell: gridNodes) {
+
+            // Draw Grid
             DrawRectangle(cell.currentPos.PosWindowProj().x, cell.currentPos.PosWindowProj().y,
                           cell.currentPos.PosWindowProj().z, cell.currentPos.PosWindowProj().w,
                           cell.color);
-        }
 
+            if(cell.currentState == CLOSED_HOUSE)
+            {
+                Disk(vec2(X_POS + (cell.currentPos.col + .5) * DX, Y_POS + (cell.currentPos.row + .5) * DY),
+                     25, cell.overlayColor);
+            }
+            if (cell.currentState == CLOSED_FACTORY)
+            {
+                Disk(vec2(X_POS + (cell.currentPos.col + .5) * DX, Y_POS + (cell.currentPos.row + .5) * DY),
+                     25, cell.overlayColor);
+
+                Line(vec2(X_POS + (cell.currentPos.col + .5) * DX, Y_POS + (cell.currentPos.row + .5) * DY),
+                     vec2(X_POS + (cell.currentPos.col + 1.0) * DX, Y_POS + (cell.currentPos.row + 0.5) * DY),
+                     1.0f, cell.overlayColor);
+            }
+        }
     }
 
     Node NodeHandler(int nodeIndex) {
         Node *node = &gridNodes.at(nodeIndex);
-        if(node->currentState == OPEN)
-        {
+        if (node->currentState == OPEN) {
             // Node State Changes, Swap/Toggled
             node->currentState = CLOSED_ROAD;
             node->color = GREY;
             return *node;
         }
-         if (node->currentState == CLOSED_ROAD) {
-             // Node State Changes, Swap/Toggled
-             node->currentState = OPEN;
-             node->color = WHITE;
-             return *node;
-         }
+        if (node->currentState == CLOSED_ROAD) {
+            // Node State Changes, Swap/Toggled
+            node->currentState = OPEN;
+            node->color = WHITE;
+            return *node;
+        }
         return *node;
     }
 

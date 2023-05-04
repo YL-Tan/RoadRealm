@@ -18,7 +18,7 @@
 using namespace std;
 
 unsigned int NUM_OF_FRAMES = 0;
-double INIT_FPS_TIME = 0;
+double INIT_FPS_TIME = 0, RANDOM_TIMER = 0;
 bool GLOBAL_MOUSE_DOWN = false;
 
 vec2 CURRENT_CLICKED_CELL((NROWS + NCOLS), (NROWS + NCOLS));
@@ -29,7 +29,7 @@ InfoPanel infoPanel;
 
 time_t oldtime = clock();
 
-// Vehicle vehicleA(-.2f, .4f, 0, BLUE);
+vector<RoadPathLinker> ROADS;
 
 vector<Vehicle> VEHICLES_COLLECTION;
 
@@ -46,45 +46,70 @@ void Update() {
     }
 }
 
-int GetHighestTenthPow(int digit) {
-    int highestDeciPow = 10;
-    while (digit >= highestDeciPow) {
-        highestDeciPow *= 10;
-    }
-    return highestDeciPow;
-}
-
-int CombineDigits(int leftDigit, int rightDigit) {
-    return (leftDigit * GetHighestTenthPow(rightDigit)) + rightDigit;
-}
-
-void ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, Vehicle &runner) {
+Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive,  vector<NodePosition>& path) {
     if (col < NCOLS && row < NROWS) {
         // Get Potential Index, Will Explain On Tuesday,
         // [0,0] bottom Left
-        int potentialIndex = CombineDigits(row, col);  //col + row;
+        int potentialIndex = CombineDigits(row, col);
 
         Node node = gridPrimitive.NodeHandler(potentialIndex);
 
-        runner.vehiclePath.push_back(node.currentPos);
-        // tempVehiclePath.push_back(node.currentPos);
+        path.push_back(node.currentPos);
 
         infoPanel.mouseSpaceDisp = "Mouse Click: X" + to_string(col) + " Y " + to_string(row);
         infoPanel.errorMsg = "Success";
+
+        return node;
+
     } else {
         infoPanel.errorMsg = "Out Of Grid Mouse Click";
     }
+    return {};
 }
 
 void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
     if (!GLOBAL_MOUSE_DOWN && !PREV_DRAGGED_CELLS.empty()) {
-        Vehicle runner(-.2f, .4f, 0, GetRandomColor());
 
-        for (vec2 cell: PREV_DRAGGED_CELLS) {
-            ToggleNodeState((int) cell.x, (int) cell.y, gridPrimitive, runner);
+        RoadPathLinker roadPathLinker;
+
+        int counter = 0;
+
+        NodePosition home, factory;
+        int homeIndex = -1, factoryIndex = -1;
+
+        for (const vec2& cell: PREV_DRAGGED_CELLS) {
+
+            Node getNode = ToggleNodeState((int) cell.x, (int) cell.y, gridPrimitive, roadPathLinker.roadPath);
+
+            if(getNode.currentState == CLOSED_HOUSE)
+            {
+              cout << "Placement House: " << counter << "\n";
+              roadPathLinker.color = getNode.overlayColor;
+
+              home = getNode.currentPos;
+              homeIndex = counter;
+            }
+            if(getNode.currentState == CLOSED_FACTORY)
+            {
+                cout << "Placement Factory: " << counter << "\n";
+                factory = getNode.currentPos;
+                factoryIndex = counter;
+                // roadPathLinker.isLinked = true;
+            }
+            counter += 1;
         }
-        // Add to Vehicles Collections
-        VEHICLES_COLLECTION.push_back(runner);
+
+        bool validatePath = gridPrimitive.IsValidDestination(home, factory, homeIndex, factoryIndex);
+
+        if(validatePath)
+        {
+            roadPathLinker.isLinked = true;
+            ROADS.push_back(roadPathLinker);
+
+            Vehicle runner(-.2f, .4f, ROADS.at(ROADS.size() - 1));
+
+            VEHICLES_COLLECTION.push_back(runner);
+        }
 
         // Clear
         PREV_DRAGGED_CELLS.clear();
@@ -154,23 +179,12 @@ void Display(GridPrimitive gridPrimitive) {
 
     UseDrawShader(ScreenMode());
 
-    /*vector<NodePosition> fakePath = {
-            gridPrimitive.gridNodes.at(0).currentPos,
-            gridPrimitive.gridNodes.at(1).currentPos,
-            gridPrimitive.gridNodes.at(2).currentPos,
-            gridPrimitive.gridNodes.at(3).currentPos,
-            gridPrimitive.gridNodes.at(13).currentPos,
-            gridPrimitive.gridNodes.at(14).currentPos,
-            gridPrimitive.gridNodes.at(15).currentPos,
-            gridPrimitive.gridNodes.at(5).currentPos,
-            gridPrimitive.gridNodes.at(25).currentPos,
-    };*/
-
     gridPrimitive.DrawGrid();
+
 
     for(Vehicle&runner: VEHICLES_COLLECTION)
     {
-        runner.Draw();
+        runner.Draw(infoPanel.logsMsg);
     }
 
     infoPanel.gridWinDim = "Grid Window: W: " + to_string(GRID_W) + " H: " + to_string(GLOBAL_H);
@@ -202,9 +216,6 @@ void Resize(int width, int height) {
 }
 
 int main(int ac, char **av) {
-    objectives.push_back({NodePosition(0, 0), NodePosition(2, 2), BLUE});
-    objectives.push_back({NodePosition(2, 0), NodePosition(8, 2), ORANGE});
-
     GLFWwindow *w = InitGLFW(100, 100, APP_WIDTH, APP_HEIGHT, "RoadRealm");
 
     RegisterMouseButton(MouseButton);
@@ -213,7 +224,15 @@ int main(int ac, char **av) {
 
     INIT_FPS_TIME = glfwGetTime();
 
+    RANDOM_TIMER = glfwGetTime();
+
     GridPrimitive gridPrimitive;
+
+    gridPrimitive.AddNewObjective(0, 1, 3, 0);
+
+    gridPrimitive.AddNewObjective(4, 2, 6, 3);
+
+    gridPrimitive.AddNewObjective(7, 3, 5, 2);
 
     while (!glfwWindowShouldClose(w)) {
         Update();
@@ -230,5 +249,6 @@ int main(int ac, char **av) {
         ToggleDraggedCellsStates(gridPrimitive);
 
         NUM_OF_FRAMES += 1;
+
     }
 }
