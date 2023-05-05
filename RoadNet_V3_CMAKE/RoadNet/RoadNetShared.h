@@ -72,9 +72,9 @@ struct InfoPanel {
 
         Text(DISP_W, GLOBAL_H - 160, WHITE, 10.0f, to_string(fpsDisp).c_str());
 
-        Text(DISP_W, GLOBAL_H - 180, WHITE, 10.0f, timeDisplay.c_str());
+        Text(DISP_W, GLOBAL_H - 180, WHITE, 12.0f, timeDisplay.c_str());
 
-        Text(DISP_W, GLOBAL_H - 200, WHITE, 10.0f, status.c_str());
+        Text(DISP_W, GLOBAL_H - 200, WHITE, 12.0f, status.c_str());
     }
 
     void togglePause() {
