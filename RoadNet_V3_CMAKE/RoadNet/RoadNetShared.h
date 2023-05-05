@@ -196,7 +196,8 @@ int GetHighestTenthPow(int digit) {
 }
 
 int CombineDigits(int leftDigit, int rightDigit) {
-    return (leftDigit * GetHighestTenthPow(rightDigit)) + rightDigit;
+     //return (leftDigit * GetHighestTenthPow(rightDigit)) + rightDigit;
+    return (NCOLS * leftDigit) + rightDigit;
 }
 
 struct Node {
