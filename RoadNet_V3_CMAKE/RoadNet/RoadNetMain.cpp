@@ -14,6 +14,7 @@
 #include "Grid.h"
 #include <string>
 #include <set>
+#include <chrono>
 
 using namespace std;
 
@@ -28,21 +29,26 @@ set<vec2> PREV_DRAGGED_CELLS;
 InfoPanel infoPanel;
 
 time_t oldtime = clock();
+chrono::duration<double> gameClock;
 
 vector<RoadPathLinker> ROADS;
 
 vector<Vehicle> VEHICLES_COLLECTION;
 
 void Update() {
-    time_t now = clock();
-    float dt = (float) (oldtime - now) / CLOCKS_PER_SEC;
-    oldtime = now;
+    if (!infoPanel.isPaused) {
+        time_t now = clock();
+        float dt = (float)(now - oldtime) / CLOCKS_PER_SEC;
+        oldtime = now;
 
-    //VehicleA.Update(dt);
+        //VehicleA.Update(dt);
 
-    for(Vehicle&runner : VEHICLES_COLLECTION)
-    {
-        runner.Update(dt);
+        for (Vehicle& runner : VEHICLES_COLLECTION)
+        {
+            runner.Update(dt);
+        }
+        gameClock += chrono::duration<double>(dt);
+        infoPanel.timeDisplay = "Time: " + to_string(gameClock.count()) + "s";
     }
 }
 
@@ -169,6 +175,20 @@ void MouseMove(float x, float y, bool leftDown, bool rightDown) {
     }
 }
 
+void KeyButton(int key, bool down, bool shift, bool control) {
+    if (down == GLFW_PRESS) {
+        switch (key) {
+            case GLFW_KEY_P:
+                infoPanel.togglePause();
+                break;
+            case GLFW_KEY_D:
+                cout << "Pressed D" << endl;
+                break;
+            // Add other key actions 
+        }
+    }
+}
+
 void Display(GridPrimitive gridPrimitive) {
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -215,12 +235,18 @@ void Resize(int width, int height) {
     glFlush();
 }
 
+const char* usage = R"(
+	Press P to pause the game
+)";
+
 int main(int ac, char **av) {
     GLFWwindow *w = InitGLFW(100, 100, APP_WIDTH, APP_HEIGHT, "RoadRealm");
+    printf("Usage:%s", usage);
 
     RegisterMouseButton(MouseButton);
     RegisterMouseMove(MouseMove);
     RegisterResize(Resize);
+    RegisterKeyboard(KeyButton);
 
     INIT_FPS_TIME = glfwGetTime();
 
