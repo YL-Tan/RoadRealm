@@ -9,7 +9,8 @@
 struct DestinationObjectives{
     Node houseNode;
     Node factoryNode;
-   // bool connected = false;
+
+    bool destLinked = false;
 };
 
 class GridPrimitive {
@@ -43,16 +44,18 @@ public:
         nodesDefaultColor = colorInput;
     }
 
-    bool IsValidDestination(NodePosition home, NodePosition factory, int homeIndex, int factoryIndex)
+    bool IsDestinationLinked(NodePosition home, NodePosition factory, int homeIndex, int factoryIndex)
     {
         if(homeIndex < factoryIndex)
         {
             for(DestinationObjectives &objectives : gridDestObjectives)
             {
-                if(objectives.houseNode.currentPos.AlignmentPosMatches(home) && objectives.factoryNode.currentPos.AlignmentPosMatches(factory))
+                if(!objectives.destLinked && objectives.houseNode.currentPos.AlignmentPosMatches(home)
+                && objectives.factoryNode.currentPos.AlignmentPosMatches(factory))
                 {
-                    // objectives.connected = true;
-                    return true;
+                    objectives.destLinked = true;
+
+                    return objectives.destLinked;
                 }
             }
         }

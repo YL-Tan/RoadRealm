@@ -15,6 +15,8 @@
 #include <string>
 #include <set>
 #include <chrono>
+#include <functional>
+#include <map>
 
 using namespace std;
 
@@ -33,9 +35,13 @@ State globalState = draw;
 time_t oldtime = clock();
 chrono::duration<double> gameClock;
 
-vector<RoadPathLinker> ROADS;
+// vector<RoadRunnerLinker> ROAD_RUNNERS;
 
-vector<Vehicle> VEHICLES_COLLECTION;
+map<size_t, RoadRunnerLinker> ROAD_RUNNERS;
+
+hash<string> STRING_HASH_FUN;
+
+// vector<Vehicle> VEHICLES_COLLECTION;
 
 void Update() {
     if (!infoPanel.isPaused) {
@@ -45,9 +51,13 @@ void Update() {
 
         //VehicleA.Update(dt);
 
-        for (Vehicle& runner : VEHICLES_COLLECTION)
+        /*for (RoadRunnerLinker& runnerLinkers : ROAD_RUNNERS)
         {
-            runner.Update(dt);
+            runnerLinkers.vehicleRunner.Update(dt);
+        }*/
+        for(auto &runnerLinkers: ROAD_RUNNERS)
+        {
+            runnerLinkers.second.vehicleRunner.Update(dt);
         }
         gameClock += chrono::duration<double>(dt);
         infoPanel.timeDisplay = "Time: " + to_string(gameClock.count()) + "s";
@@ -59,15 +69,16 @@ void Update() {
     infoPanel.gridPrimitiveDim = "Grid DIM: (" + to_string(NROWS) + " by " + to_string(NCOLS) + ")";
 }
 
-Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive,  vector<NodePosition>& path) {
+Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive,  vector<NodePosition>& path, string& pathKey) {
     if (col < NCOLS && row < NROWS) {
         // Get Potential Index, Will Explain On Tuesday,
         // [0,0] bottom Left
         int potentialIndex = CombineDigits(row, col);
 
         Node node = gridPrimitive.NodeHandler(potentialIndex);
-
         path.push_back(node.currentPos);
+
+        pathKey += to_string(node.currentPos.row) + to_string(node.currentPos.col);
 
         infoPanel.mouseSpaceDisp = "Mouse Click: X" + to_string(col) + " Y " + to_string(row);
         infoPanel.errorMsg = "Success";
@@ -83,21 +94,24 @@ Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive,  vector<Nod
 void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
     if (!GLOBAL_MOUSE_DOWN && !PREV_DRAGGED_CELLS.empty()) {
 
-        RoadPathLinker roadPathLinker;
+        // RoadRunnerLinker roadRunnerLinker;
+        Vehicle vehicleRunner(-.2f, .4f);
 
         int counter = 0;
-
         NodePosition home, factory;
         int homeIndex = -1, factoryIndex = -1;
 
+        string pathHashKey;
+
         for (const vec2& cell: PREV_DRAGGED_CELLS) {
 
-            Node getNode = ToggleNodeState((int) cell.x, (int) cell.y, gridPrimitive, roadPathLinker.roadPath);
+            Node getNode = ToggleNodeState((int) cell.x, (int) cell.y, gridPrimitive, vehicleRunner.runnerPath, pathHashKey);
 
             if(getNode.currentState == CLOSED_HOUSE)
             {
               cout << "Placement House: " << counter << "\n";
-              roadPathLinker.color = getNode.overlayColor;
+
+              vehicleRunner.overlayColor = getNode.overlayColor;
 
               home = getNode.currentPos;
               homeIndex = counter;
@@ -112,18 +126,17 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
             counter += 1;
         }
 
-        bool validatePath = gridPrimitive.IsValidDestination(home, factory, homeIndex, factoryIndex);
+        bool validatePath = gridPrimitive.IsDestinationLinked(home, factory, homeIndex, factoryIndex);
 
         if(validatePath)
         {
-            roadPathLinker.isLinked = true;
-            ROADS.push_back(roadPathLinker);
+            // Hash PathKey
+            size_t hashValue = STRING_HASH_FUN(pathHashKey);
 
-            Vehicle runner(-.2f, .4f, ROADS.at(ROADS.size() - 1));
+            RoadRunnerLinker runnerLinker(hashValue, vehicleRunner, true);
 
-            VEHICLES_COLLECTION.push_back(runner);
+            ROAD_RUNNERS.insert({hashValue, runnerLinker});
         }
-
         // Clear
         PREV_DRAGGED_CELLS.clear();
     }
@@ -213,10 +226,9 @@ void Display(GridPrimitive gridPrimitive) {
 
     gridPrimitive.DrawGrid();
 
-
-    for(Vehicle&runner: VEHICLES_COLLECTION)
+    for(auto &runnerLinkers: ROAD_RUNNERS)
     {
-        runner.Draw(infoPanel.logsMsg);
+        runnerLinkers.second.vehicleRunner.Draw(infoPanel.logsMsg);
     }
 
     infoPanel.InfoDisplay();

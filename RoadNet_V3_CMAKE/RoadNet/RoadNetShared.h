@@ -214,29 +214,24 @@ struct Node {
     }
 };
 
-struct RoadPathLinker
-{
-    vector<NodePosition> roadPath;
-    bool isLinked = false;
-    vec3 color;
-};
-
 struct Vehicle {
     float speed = -.5, t = 1;
-    // int idVehicle = 0;
-    //vec3 vehicleColor;
-    //vector<NodePosition> vehiclePath;
-    RoadPathLinker roadPath;
+    vec3 overlayColor;
+    vector<NodePosition> runnerPath;
 
     Vehicle() { }
-    Vehicle(float s, float tt , RoadPathLinker &path)
+    Vehicle(float s, float tt)
     {
         this->speed = s;
         this->t = tt;
-        this->roadPath = path;
     }
-
-    /*Vehicle(float s, float tt, int id, vec3 color) : t(tt), speed(s), idVehicle(id), vehicleColor(color) { }*/
+    Vehicle(float s, float tt , const vec3& color, const vector<NodePosition>& path)
+    {
+        this->speed = s;
+        this->t = tt;
+        this->overlayColor = color;
+        this->runnerPath = path;
+    }
 
     void Update(float dt) {
         t += dt * speed;
@@ -245,21 +240,36 @@ struct Vehicle {
     }
     void Draw(string &drawLogs) {
 
-        if(roadPath.isLinked)
+        if(!runnerPath.empty())
         {
             // Draw Path Using Vehicle Color
-            DrawPath(roadPath.roadPath, 2.5f, roadPath.color);
+            DrawPath(runnerPath, 2.5f, overlayColor);
 
-            float dist = t * PathLength(roadPath.roadPath);
-            vec2 p = PointOnPath(dist, roadPath.roadPath);
+            float dist = t * PathLength(runnerPath);
+            vec2 p = PointOnPath(dist, runnerPath);
 
             // Draw Disk Dot
-            Disk(vec2(X_POS + (p.x + .5) * DX, Y_POS + (p.y + .5) * DY), 20, roadPath.color);
-
-            // Line(vec2(X_POS + (p.x + .5) * DX, Y_POS + (p.y + .5) * DY), vec2(X_POS + (p.x + 1.0) * DX, Y_POS + (p.y + 0.5) * DY),1.0f, BLUE);
+            Disk(vec2(X_POS + (p.x + .5) * DX, Y_POS + (p.y + .5) * DY), 20, overlayColor);
 
             drawLogs = "runner pos: " + to_string(p.x) + " " + to_string(p.y);
         }
+    }
+};
+
+struct RoadRunnerLinker
+{
+    size_t hashedId;
+    bool isLinked = false;
+
+    // vec3 roadColor;
+    Vehicle vehicleRunner;
+    // vector<NodePosition> roadPath;
+
+    RoadRunnerLinker(size_t hashedVal,  const Vehicle& runner, bool linkStatus)
+    {
+        this->hashedId = hashedVal;
+        this->vehicleRunner = runner;
+        this->isLinked = linkStatus;
     }
 };
 
