@@ -114,6 +114,9 @@ public:
                      vec2(X_POS + (cell.currentPos.col + 0.5) * DX, Y_POS + (cell.currentPos.row + 0.0) * DY),
                      1.0f, cell.overlayColor);
             }
+            if (cell.currentState == POTENTIAL_ROAD) {
+                // FIXME
+            }
         }
     }
 
@@ -129,6 +132,12 @@ public:
             // Node State Changes, Swap/Toggled
             node->currentState = OPEN;
             node->color = WHITE;
+            return *node;
+        }
+        // FIXME
+        if (node->currentState == POTENTIAL_ROAD) {
+            node->currentState = CLOSED_ROAD;
+            node->color = PALE_GREY;
             return *node;
         }
         return *node;

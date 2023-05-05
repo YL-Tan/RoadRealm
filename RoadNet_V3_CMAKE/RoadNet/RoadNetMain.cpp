@@ -34,6 +34,7 @@ State globalState = draw;
 
 time_t oldtime = clock();
 chrono::duration<double> gameClock;
+int currNumRoads = 10;
 
 // vector<RoadRunnerLinker> ROAD_RUNNERS;
 
@@ -67,6 +68,7 @@ void Update() {
     infoPanel.infoWinDim = "Info Window: W: " + to_string(DISP_W) + " H: " + to_string(GLOBAL_H);
     infoPanel.appWinDisp = "Global Window: W: " + to_string(GLOBAL_W) + " H: " + to_string(GLOBAL_H);
     infoPanel.gridPrimitiveDim = "Grid DIM: (" + to_string(NROWS) + " by " + to_string(NCOLS) + ")";
+    infoPanel.numRoads = "Number of Roads: " + to_string(currNumRoads);
 }
 
 Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive,  vector<NodePosition>& path, string& pathKey) {
@@ -100,6 +102,7 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
         int counter = 0;
         NodePosition home, factory;
         int homeIndex = -1, factoryIndex = -1;
+        int oldNumRoads = currNumRoads;
 
         string pathHashKey;
 
@@ -123,6 +126,7 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
                 factoryIndex = counter;
                 // roadPathLinker.isLinked = true;
             }
+            currNumRoads -= 1;
             counter += 1;
         }
 
@@ -130,6 +134,7 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
 
         if(validatePath)
         {
+            currNumRoads += 2; // compensate from including the starting and ending nodes.
             // Hash PathKey
             size_t hashValue = STRING_HASH_FUN(pathHashKey);
 
@@ -137,8 +142,19 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
 
             ROAD_RUNNERS.insert({hashValue, runnerLinker});
         }
+        else 
+        {
+            currNumRoads = oldNumRoads;
+        }
         // Clear
         PREV_DRAGGED_CELLS.clear();
+    }
+    else
+    {
+        //FIXME
+        for (const vec2& cell : PREV_DRAGGED_CELLS) {
+            
+        }
     }
 }
 

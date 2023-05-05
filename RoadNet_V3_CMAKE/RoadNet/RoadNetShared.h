@@ -26,10 +26,10 @@ float DX = (float) GRID_W / NCOLS, DY = (float) GLOBAL_H / NROWS;
 
 const vec3 WHITE(1, 1, 1), BLACK(0, 0, 0), GREY(.5, .5, .5), RED(1, 0, 0),
         GREEN(0, 1, 0), BLUE(0, 0, 1), YELLOW(1, 1, 0),
-        ORANGE(1, .55f, 0), PURPLE(.8f, .1f, .5f), CYAN(0, 1, 1);
+        ORANGE(1, .55f, 0), PURPLE(.8f, .1f, .5f), CYAN(0, 1, 1), PALE_GREY(.8, .8, .8);
 
 enum NodeStates {
-    OPEN, CLOSED_ROAD, CLOSED_HOUSE, CLOSED_FACTORY, DEBUG_OUT_BOUNDS
+    OPEN, CLOSED_ROAD, CLOSED_HOUSE, CLOSED_FACTORY, DEBUG_OUT_BOUNDS, POTENTIAL_ROAD
 };
 
 enum DebugColorIndex
@@ -55,6 +55,8 @@ struct InfoPanel {
     bool isPaused = false;
     string timeDisplay;
     string status;
+    string numRoads;
+
 
     void InfoDisplay() {
         Text(DISP_W, GLOBAL_H, WHITE, 10.0f, mouseSpaceDisp.c_str());
@@ -75,6 +77,8 @@ struct InfoPanel {
         Text(DISP_W, GLOBAL_H - 180, WHITE, 12.0f, timeDisplay.c_str());
 
         Text(DISP_W, GLOBAL_H - 200, WHITE, 12.0f, status.c_str());
+
+        Text(DISP_W, GLOBAL_H - 220, WHITE, 10.0f, numRoads.c_str());
     }
 
     void togglePause() {
