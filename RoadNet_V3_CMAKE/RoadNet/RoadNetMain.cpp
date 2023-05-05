@@ -22,11 +22,13 @@ unsigned int NUM_OF_FRAMES = 0;
 double INIT_FPS_TIME = 0, RANDOM_TIMER = 0;
 bool GLOBAL_MOUSE_DOWN = false;
 
+enum State {draw, wipe};
 vec2 CURRENT_CLICKED_CELL((NROWS + NCOLS), (NROWS + NCOLS));
 
 set<vec2> PREV_DRAGGED_CELLS;
 
 InfoPanel infoPanel;
+State globalState = draw;
 
 time_t oldtime = clock();
 chrono::duration<double> gameClock;
@@ -182,7 +184,12 @@ void KeyButton(int key, bool down, bool shift, bool control) {
                 infoPanel.togglePause();
                 break;
             case GLFW_KEY_D:
-                cout << "Pressed D" << endl;
+                globalState = draw;
+                infoPanel.status = "Draw";
+                break;
+            case GLFW_KEY_W:
+                globalState = wipe;
+                infoPanel.status = "Wipe";
                 break;
             // Add other key actions 
         }
@@ -241,6 +248,7 @@ const char* usage = R"(
 
 int main(int ac, char **av) {
     GLFWwindow *w = InitGLFW(100, 100, APP_WIDTH, APP_HEIGHT, "RoadRealm");
+
     printf("Usage:%s", usage);
 
     RegisterMouseButton(MouseButton);
