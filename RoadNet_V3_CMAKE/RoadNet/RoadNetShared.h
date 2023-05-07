@@ -52,11 +52,9 @@ struct InfoPanel {
     string errorMsg;
     string logsMsg;
     double fpsDisp = 0;
-    bool isPaused = false;
     string timeDisplay;
     string status;
     string numRoads;
-
 
     void InfoDisplay() {
         Text(DISP_W, GLOBAL_H, WHITE, 10.0f, mouseSpaceDisp.c_str());
@@ -79,10 +77,6 @@ struct InfoPanel {
         Text(DISP_W, GLOBAL_H - 200, WHITE, 12.0f, status.c_str());
 
         Text(DISP_W, GLOBAL_H - 220, WHITE, 10.0f, numRoads.c_str());
-    }
-
-    void togglePause() {
-        isPaused = !isPaused;
     }
 };
 

@@ -21,10 +21,12 @@
 using namespace std;
 
 unsigned int NUM_OF_FRAMES = 0;
-double INIT_FPS_TIME = 0, RANDOM_TIMER = 0;
-bool GLOBAL_MOUSE_DOWN = false;
+double INIT_FPS_TIME = 0;
+bool GLOBAL_MOUSE_DOWN = false, GLOBAL_PAUSE = false;
 
-enum State {draw, wipe};
+enum State {
+    draw, wipe
+};
 vec2 CURRENT_CLICKED_CELL((NROWS + NCOLS), (NROWS + NCOLS));
 
 set<vec2> PREV_DRAGGED_CELLS;
@@ -43,26 +45,24 @@ map<size_t, RoadRunnerLinker> ROAD_RUNNERS;
 hash<string> STRING_HASH_FUN;
 
 // vector<Vehicle> VEHICLES_COLLECTION;
+time_t paused_time = 0;
 
 void Update() {
-    if (!infoPanel.isPaused) {
-        time_t now = clock();
-        float dt = (float)(now - oldtime) / CLOCKS_PER_SEC;
-        oldtime = now;
 
-        //VehicleA.Update(dt);
+    time_t now = clock();
+    cout << "Now Paused Time: " << now << "\t" << paused_time << "\t" << oldtime << "\n";
+    float dt = (float) (now - oldtime) / CLOCKS_PER_SEC;
+    oldtime = now;
 
-        /*for (RoadRunnerLinker& runnerLinkers : ROAD_RUNNERS)
-        {
-            runnerLinkers.vehicleRunner.Update(dt);
-        }*/
-        for(auto &runnerLinkers: ROAD_RUNNERS)
-        {
+    if (!GLOBAL_PAUSE) {
+        for (auto &runnerLinkers: ROAD_RUNNERS) {
             runnerLinkers.second.vehicleRunner.Update(dt);
         }
-        gameClock += chrono::duration<double>(dt);
-        infoPanel.timeDisplay = "Time: " + to_string(gameClock.count()) + "s";
     }
+
+    gameClock += chrono::duration<double>(dt);
+    infoPanel.timeDisplay = "Time: " + to_string(gameClock.count()) + "s";
+    paused_time = 0;
 
     infoPanel.gridWinDim = "Grid Window: W: " + to_string(GRID_W) + " H: " + to_string(GLOBAL_H);
     infoPanel.infoWinDim = "Info Window: W: " + to_string(DISP_W) + " H: " + to_string(GLOBAL_H);
@@ -71,7 +71,7 @@ void Update() {
     infoPanel.numRoads = "Number of Roads: " + to_string(currNumRoads);
 }
 
-Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive,  vector<NodePosition>& path, string& pathKey) {
+Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, vector<NodePosition> &path, string &pathKey) {
     if (col < NCOLS && row < NROWS) {
         // Get Potential Index, Will Explain On Tuesday,
         // [0,0] bottom Left
@@ -105,13 +105,13 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
 
         string pathHashKey;
 
-        for (const vec2& cell: PREV_DRAGGED_CELLS) {
+        for (const vec2 &cell: PREV_DRAGGED_CELLS) {
 
-            Node getNode = ToggleNodeState((int) cell.x, (int) cell.y, gridPrimitive, vehicleRunner.runnerPath, pathHashKey);
+            Node getNode = ToggleNodeState((int) cell.x, (int) cell.y, gridPrimitive, vehicleRunner.runnerPath,
+                                           pathHashKey);
 
             cout << "Current State: -m " << getNode.currentState << "\n";
-            if(getNode.currentState == CLOSED_HOUSE)
-            {
+            if (getNode.currentState == CLOSED_HOUSE) {
                 cout << "Placement House: " << counter << "\n";
 
                 vehicleRunner.overlayColor = getNode.overlayColor;
@@ -119,8 +119,7 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
                 home = getNode.currentPos;
                 homeIndex = counter;
             }
-            if(getNode.currentState == CLOSED_FACTORY)
-            {
+            if (getNode.currentState == CLOSED_FACTORY) {
                 cout << "Placement Factory: " << counter << "\n";
                 factory = getNode.currentPos;
                 factoryIndex = counter;
@@ -132,8 +131,7 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
 
         bool validatePath = gridPrimitive.IsDestinationLinked(home, factory, homeIndex, factoryIndex);
 
-        if(validatePath)
-        {
+        if (validatePath) {
             currNumRoads += 2; // compensate from including the starting and ending nodes.
             // Hash PathKey
             size_t hashValue = STRING_HASH_FUN(pathHashKey);
@@ -141,22 +139,18 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
             RoadRunnerLinker runnerLinker(hashValue, vehicleRunner, true);
 
             ROAD_RUNNERS.insert({hashValue, runnerLinker});
-        }
-        else
-        {
+        } else {
             currNumRoads = oldNumRoads;
         }
         // Clear
         PREV_DRAGGED_CELLS.clear();
         CURRENT_CLICKED_CELL = vec2((NROWS + NCOLS), (NROWS + NCOLS));
-    }
-    else
-    {
+    } else {
         //FIXME
-        if(CURRENT_CLICKED_CELL.x < NCOLS && CURRENT_CLICKED_CELL.y < NROWS)
-        {
-           Node getNode = gridPrimitive.NodeHandler(CombineDigits((int)CURRENT_CLICKED_CELL.y, (int)CURRENT_CLICKED_CELL.x));
-           cout << "Current State: " << getNode.currentState << "\n";
+        if (CURRENT_CLICKED_CELL.x < NCOLS && CURRENT_CLICKED_CELL.y < NROWS) {
+            Node getNode = gridPrimitive.NodeHandler(
+                    CombineDigits((int) CURRENT_CLICKED_CELL.y, (int) CURRENT_CLICKED_CELL.x));
+            cout << "Current State: " << getNode.currentState << "\n";
         }
         CURRENT_CLICKED_CELL = vec2((NROWS + NCOLS), (NROWS + NCOLS));
     }
@@ -219,7 +213,7 @@ void KeyButton(int key, bool down, bool shift, bool control) {
     if (down == GLFW_PRESS) {
         switch (key) {
             case GLFW_KEY_P:
-                infoPanel.togglePause();
+                GLOBAL_PAUSE = !GLOBAL_PAUSE;
                 break;
             case GLFW_KEY_D:
                 globalState = draw;
@@ -229,7 +223,7 @@ void KeyButton(int key, bool down, bool shift, bool control) {
                 globalState = wipe;
                 infoPanel.status = "Wipe";
                 break;
-            // Add other key actions
+                // Add other key actions
         }
     }
 }
@@ -246,8 +240,7 @@ void Display(GridPrimitive gridPrimitive) {
 
     gridPrimitive.DrawGrid();
 
-    for(auto &runnerLinkers: ROAD_RUNNERS)
-    {
+    for (auto &runnerLinkers: ROAD_RUNNERS) {
         runnerLinkers.second.vehicleRunner.Draw(infoPanel.logsMsg);
     }
 
@@ -274,7 +267,7 @@ void Resize(int width, int height) {
     glFlush();
 }
 
-const char* usage = R"(
+const char *usage = R"(
 	Press P to pause the game
 )";
 
@@ -289,8 +282,6 @@ int main(int ac, char **av) {
     RegisterKeyboard(KeyButton);
 
     INIT_FPS_TIME = glfwGetTime();
-
-    RANDOM_TIMER = glfwGetTime();
 
     GridPrimitive gridPrimitive;
 
