@@ -32,8 +32,7 @@ enum NodeStates {
     OPEN, CLOSED_ROAD, CLOSED_HOUSE, CLOSED_FACTORY, POTENTIAL_ROAD
 };
 
-enum DebugColorIndex
-{
+enum DebugColorIndex {
     BLUE_COLOR_I,
     ORANGE_COLOR_I,
     PURPLE_COLOR_I,
@@ -84,6 +83,7 @@ struct NodePosition {
     int row = -1, col = -1;
 
     NodePosition() {};
+
     NodePosition(int r, int c) : row(r), col(c) {};
 
     float DistanceTo(NodePosition i) {
@@ -95,22 +95,19 @@ struct NodePosition {
 
     vec2 Point() { return vec2(X_POS + (col + .5) * DX, Y_POS + (row + .5) * DY); }
 
-    vec4 PosWindowProj()
-    {
+    vec4 PosWindowProj() {
         return vec4((int) (X_POS + DX * (float) col), (int) (Y_POS + DY * (float) row),
-                    (int) DX - 1,   (int) DY - 1);
+                    (int) DX - 1, (int) DY - 1);
     }
 
-    bool AlignmentPosMatches(int r, int c)
-    {
-        if(row == r && col == c)
-        {
+    bool AlignmentPosMatches(int r, int c) {
+        if (row == r && col == c) {
             return true;
         }
         return false;
     }
-    bool AlignmentPosMatches(NodePosition comparePos)
-    {
+
+    bool AlignmentPosMatches(NodePosition comparePos) {
         return AlignmentPosMatches(comparePos.row, comparePos.col);
     }
 
@@ -118,31 +115,57 @@ struct NodePosition {
 };
 
 
-vec3 DebugGetColor(DebugColorIndex colorIndex)
-{
-    if(colorIndex == BLUE_COLOR_I)
-    {
+vec3 DebugGetColor(DebugColorIndex colorIndex) {
+    if (colorIndex == BLUE_COLOR_I) {
         return BLUE;
     }
-    if(colorIndex == ORANGE_COLOR_I)
-    {
+    if (colorIndex == ORANGE_COLOR_I) {
         return ORANGE;
     }
-    if(colorIndex == PURPLE_COLOR_I)
-    {
+    if (colorIndex == PURPLE_COLOR_I) {
         return PURPLE;
     }
-    if(colorIndex == RED_COLOR_I)
-    {
+    if (colorIndex == RED_COLOR_I) {
         return RED;
     }
     return GREEN;
 }
 
-vec3 GetRandomColor()
-{
+vec3 GetRandomDebugColor() {
     int randomIndex = rand() % 5 + 0;
-    return DebugGetColor((DebugColorIndex)randomIndex);
+    return DebugGetColor((DebugColorIndex) randomIndex);
+}
+
+void GetRandomDistribution(int distribLimit, int numOfRndValues, vector<int> &distribRndPlacement) {
+    random_device generator;
+    uniform_int_distribution<int> distribution(0, distribLimit);
+
+    for (int i = 0; i < numOfRndValues; i++) {
+        distribRndPlacement.push_back(distribution(generator));
+    }
+}
+
+vec2 GetRandomPoint() {
+    // Limit will be the Dimensions
+    vector<int> rndNodePoint = {};
+
+    GetRandomDistribution(NROWS, 2, rndNodePoint);
+
+    return {(rndNodePoint.at(0) % NCOLS), (rndNodePoint.at(1) % NROWS)};
+}
+
+vec3 GetRandomColor(int stride = 1) {
+    int maxColorShades = 255;
+
+    vector<int> rndDistribColors = {};
+
+    GetRandomDistribution(maxColorShades, 3, rndDistribColors);
+
+    float red = (float) ((rndDistribColors.at(0) + stride) % maxColorShades) / (float) maxColorShades;
+    float green = (float) ((rndDistribColors.at(1) + stride) % maxColorShades) / (float) maxColorShades;
+    float blue = (float) ((rndDistribColors.at(2) + stride) % maxColorShades) / (float) maxColorShades;
+
+    return {red, green, blue};
 }
 
 void DrawVertex(float row, float col) {
@@ -194,7 +217,7 @@ int GetHighestTenthPow(int digit) {
 }
 
 int CombineDigits(int leftDigit, int rightDigit) {
-     //return (leftDigit * GetHighestTenthPow(rightDigit)) + rightDigit;
+    //return (leftDigit * GetHighestTenthPow(rightDigit)) + rightDigit;
     return (NCOLS * leftDigit) + rightDigit;
 }
 
@@ -218,14 +241,14 @@ struct Vehicle {
     vec3 overlayColor;
     vector<NodePosition> runnerPath;
 
-    Vehicle() { }
-    Vehicle(float s, float tt)
-    {
+    Vehicle() {}
+
+    Vehicle(float s, float tt) {
         this->speed = s;
         this->t = tt;
     }
-    Vehicle(float s, float tt , const vec3& color, const vector<NodePosition>& path)
-    {
+
+    Vehicle(float s, float tt, const vec3 &color, const vector<NodePosition> &path) {
         this->speed = s;
         this->t = tt;
         this->overlayColor = color;
@@ -237,10 +260,10 @@ struct Vehicle {
         if (t < 0 || t > 1) speed = -speed;
         t = t < 0 ? 0 : t > 1 ? 1 : t;
     }
+
     void Draw(string &drawLogs) {
 
-        if(!runnerPath.empty())
-        {
+        if (!runnerPath.empty()) {
             // Draw Path Using Vehicle Color
             DrawPath(runnerPath, 2.5f, overlayColor);
 
@@ -255,8 +278,7 @@ struct Vehicle {
     }
 };
 
-struct RoadRunnerLinker
-{
+struct RoadRunnerLinker {
     size_t hashedId;
     bool isLinked = false;
 
@@ -264,8 +286,7 @@ struct RoadRunnerLinker
     Vehicle vehicleRunner;
     // vector<NodePosition> roadPath;
 
-    RoadRunnerLinker(size_t hashedVal,  const Vehicle& runner, bool linkStatus)
-    {
+    RoadRunnerLinker(size_t hashedVal, const Vehicle &runner, bool linkStatus) {
         this->hashedId = hashedVal;
         this->vehicleRunner = runner;
         this->isLinked = linkStatus;

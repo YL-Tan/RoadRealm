@@ -6,7 +6,7 @@
 
 #include "RoadNetShared.h"
 
-struct DestinationObjectives{
+struct DestinationObjectives {
     Node houseNode;
     Node factoryNode;
 
@@ -29,6 +29,13 @@ private:
         }
     }
 
+    bool IsAClosedBuilding(const Node &node) {
+        if (node.currentState == CLOSED_FACTORY || node.currentState == CLOSED_HOUSE) {
+            return true;
+        }
+        return false;
+    }
+
 public:
     // N * N grid's nodes/cells
     vector<Node> gridNodes = {};
@@ -44,15 +51,11 @@ public:
         nodesDefaultColor = colorInput;
     }
 
-    bool IsDestinationLinked(NodePosition home, NodePosition factory, int homeIndex, int factoryIndex)
-    {
-        if(homeIndex < factoryIndex)
-        {
-            for(DestinationObjectives &objectives : gridDestObjectives)
-            {
-                if(!objectives.destLinked && objectives.houseNode.currentPos.AlignmentPosMatches(home)
-                && objectives.factoryNode.currentPos.AlignmentPosMatches(factory))
-                {
+    bool IsDestinationLinked(NodePosition home, NodePosition factory, int homeIndex, int factoryIndex) {
+        if (homeIndex < factoryIndex) {
+            for (DestinationObjectives &objectives: gridDestObjectives) {
+                if (!objectives.destLinked && objectives.houseNode.currentPos.AlignmentPosMatches(home)
+                    && objectives.factoryNode.currentPos.AlignmentPosMatches(factory)) {
                     objectives.destLinked = true;
 
                     return objectives.destLinked;
@@ -62,25 +65,25 @@ public:
         return false;
     }
 
-    bool AddNewObjective(int startR, int startC, int endR, int endC)
-    {
+    bool AddNewObjective(int startR, int startC, int endR, int endC) {
         int startNIndex = CombineDigits(startR, startC);
         int endNIndex = CombineDigits(endR, endC);
 
-        if(startNIndex < gridNodes.size() && endNIndex < gridNodes.size())
-        {
-            // House = Start, Factory = End
-            gridNodes.at(startNIndex).currentState = CLOSED_HOUSE;
-            gridNodes.at(endNIndex).currentState = CLOSED_FACTORY;
+        if (startNIndex < gridNodes.size() && endNIndex < gridNodes.size()) {
+            if (!IsAClosedBuilding(gridNodes.at(startNIndex)) && !IsAClosedBuilding(gridNodes.at(endNIndex))) {
+                // House = Start, Factory = End
+                gridNodes.at(startNIndex).currentState = CLOSED_HOUSE;
+                gridNodes.at(endNIndex).currentState = CLOSED_FACTORY;
 
-            vec3 shrRandColor = GetRandomColor();
+                vec3 shrRandColor = GetRandomColor();
 
-            gridNodes.at(startNIndex).overlayColor = shrRandColor;
-            gridNodes.at(endNIndex).overlayColor = shrRandColor;
+                gridNodes.at(startNIndex).overlayColor = shrRandColor;
+                gridNodes.at(endNIndex).overlayColor = shrRandColor;
 
-            // Add To Objectives
-            gridDestObjectives.push_back({gridNodes.at(startNIndex), gridNodes.at(endNIndex)});
-            return true;
+                // Add To Objectives
+                gridDestObjectives.push_back({gridNodes.at(startNIndex), gridNodes.at(endNIndex)});
+                return true;
+            }
         }
         return false;
     }
@@ -94,13 +97,11 @@ public:
                           cell.currentPos.PosWindowProj().z, cell.currentPos.PosWindowProj().w,
                           cell.color);
 
-            if(cell.currentState == CLOSED_HOUSE)
-            {
+            if (cell.currentState == CLOSED_HOUSE) {
                 Disk(vec2(X_POS + (cell.currentPos.col + .5) * DX, Y_POS + (cell.currentPos.row + .5) * DY),
                      25, cell.overlayColor);
             }
-            if (cell.currentState == CLOSED_FACTORY)
-            {
+            if (cell.currentState == CLOSED_FACTORY) {
                 Disk(vec2(X_POS + (cell.currentPos.col + .5) * DX, Y_POS + (cell.currentPos.row + .5) * DY),
                      25, cell.overlayColor);
 
@@ -141,12 +142,10 @@ public:
             node->currentState = node->transState;
             node->transState = POTENTIAL_ROAD;
 
-            if(node->currentState == CLOSED_ROAD)
-            {
+            if (node->currentState == CLOSED_ROAD) {
                 node->color = GREY;
             }
-            if(node->currentState == OPEN)
-            {
+            if (node->currentState == OPEN) {
                 node->color = WHITE;
             }
             return *node;

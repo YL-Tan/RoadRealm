@@ -285,11 +285,18 @@ int main(int ac, char **av) {
 
     GridPrimitive gridPrimitive;
 
-    gridPrimitive.AddNewObjective(0, 1, 3, 0);
+    /* gridPrimitive.AddNewObjective(0, 1, 3, 0);
 
-    gridPrimitive.AddNewObjective(4, 2, 6, 3);
+     gridPrimitive.AddNewObjective(4, 2, 6, 3);
 
-    gridPrimitive.AddNewObjective(7, 3, 5, 2);
+     gridPrimitive.AddNewObjective(7, 3, 5, 2);*/
+
+    for (int i = 0; i < 5; i++) {
+        vec2 rndStPoint = GetRandomPoint();
+        vec2 rndEdPoint = GetRandomPoint();
+
+        gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y, (int) rndEdPoint.x);
+    }
 
     while (!glfwWindowShouldClose(w)) {
         Update();
