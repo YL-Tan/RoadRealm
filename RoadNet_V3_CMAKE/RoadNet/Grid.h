@@ -124,20 +124,31 @@ public:
         Node *node = &gridNodes.at(nodeIndex);
         if (node->currentState == OPEN) {
             // Node State Changes, Swap/Toggled
-            node->currentState = CLOSED_ROAD;
-            node->color = GREY;
+            node->currentState = node->transState;
+            node->transState = CLOSED_ROAD;
+            node->color = ORANGE;
             return *node;
         }
         if (node->currentState == CLOSED_ROAD) {
             // Node State Changes, Swap/Toggled
-            node->currentState = OPEN;
-            node->color = WHITE;
+            node->currentState = node->transState;
+            node->transState = OPEN;
+            node->color = ORANGE;
             return *node;
         }
         // FIXME
         if (node->currentState == POTENTIAL_ROAD) {
-            node->currentState = CLOSED_ROAD;
-            node->color = PALE_GREY;
+            node->currentState = node->transState;
+            node->transState = POTENTIAL_ROAD;
+
+            if(node->currentState == CLOSED_ROAD)
+            {
+                node->color = GREY;
+            }
+            if(node->currentState == OPEN)
+            {
+                node->color = WHITE;
+            }
             return *node;
         }
         return *node;

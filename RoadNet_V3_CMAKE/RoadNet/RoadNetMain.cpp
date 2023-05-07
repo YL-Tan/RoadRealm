@@ -95,7 +95,6 @@ Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive,  vector<Nod
 
 void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
     if (!GLOBAL_MOUSE_DOWN && !PREV_DRAGGED_CELLS.empty()) {
-
         // RoadRunnerLinker roadRunnerLinker;
         Vehicle vehicleRunner(-.2f, .4f);
 
@@ -110,14 +109,15 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
 
             Node getNode = ToggleNodeState((int) cell.x, (int) cell.y, gridPrimitive, vehicleRunner.runnerPath, pathHashKey);
 
+            cout << "Current State: -m " << getNode.currentState << "\n";
             if(getNode.currentState == CLOSED_HOUSE)
             {
-              cout << "Placement House: " << counter << "\n";
+                cout << "Placement House: " << counter << "\n";
 
-              vehicleRunner.overlayColor = getNode.overlayColor;
+                vehicleRunner.overlayColor = getNode.overlayColor;
 
-              home = getNode.currentPos;
-              homeIndex = counter;
+                home = getNode.currentPos;
+                homeIndex = counter;
             }
             if(getNode.currentState == CLOSED_FACTORY)
             {
@@ -142,19 +142,23 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
 
             ROAD_RUNNERS.insert({hashValue, runnerLinker});
         }
-        else 
+        else
         {
             currNumRoads = oldNumRoads;
         }
         // Clear
         PREV_DRAGGED_CELLS.clear();
+        CURRENT_CLICKED_CELL = vec2((NROWS + NCOLS), (NROWS + NCOLS));
     }
     else
     {
         //FIXME
-        for (const vec2& cell : PREV_DRAGGED_CELLS) {
-            
+        if(CURRENT_CLICKED_CELL.x < NCOLS && CURRENT_CLICKED_CELL.y < NROWS)
+        {
+           Node getNode = gridPrimitive.NodeHandler(CombineDigits((int)CURRENT_CLICKED_CELL.y, (int)CURRENT_CLICKED_CELL.x));
+           cout << "Current State: " << getNode.currentState << "\n";
         }
+        CURRENT_CLICKED_CELL = vec2((NROWS + NCOLS), (NROWS + NCOLS));
     }
 }
 
@@ -225,7 +229,7 @@ void KeyButton(int key, bool down, bool shift, bool control) {
                 globalState = wipe;
                 infoPanel.status = "Wipe";
                 break;
-            // Add other key actions 
+            // Add other key actions
         }
     }
 }

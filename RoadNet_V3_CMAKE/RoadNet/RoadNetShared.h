@@ -29,7 +29,7 @@ const vec3 WHITE(1, 1, 1), BLACK(0, 0, 0), GREY(.5, .5, .5), RED(1, 0, 0),
         ORANGE(1, .55f, 0), PURPLE(.8f, .1f, .5f), CYAN(0, 1, 1), PALE_GREY(.8, .8, .8);
 
 enum NodeStates {
-    OPEN, CLOSED_ROAD, CLOSED_HOUSE, CLOSED_FACTORY, DEBUG_OUT_BOUNDS, POTENTIAL_ROAD
+    OPEN, CLOSED_ROAD, CLOSED_HOUSE, CLOSED_FACTORY, POTENTIAL_ROAD
 };
 
 enum DebugColorIndex
@@ -209,6 +209,7 @@ struct Node {
     vec3 color = WHITE;
     vec3 overlayColor = WHITE;
     NodeStates currentState = OPEN;
+    NodeStates transState = POTENTIAL_ROAD;
 
     Node() {}
 
