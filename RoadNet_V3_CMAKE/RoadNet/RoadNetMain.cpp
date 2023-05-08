@@ -141,6 +141,13 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
         } else {
             currNumRoads = oldNumRoads;
         }
+        if (globalState == wipe)
+        {
+            cout << pathHashKey << endl;
+            size_t hashValue = STRING_HASH_FUN(pathHashKey);
+            ROAD_RUNNERS.erase(hashValue);
+            currNumRoads += (int)PREV_DRAGGED_CELLS.size() - 2;
+        }
         // Clear
         PREV_DRAGGED_CELLS.clear();
         CURRENT_CLICKED_CELL = vec2((NROWS + NCOLS), (NROWS + NCOLS));
