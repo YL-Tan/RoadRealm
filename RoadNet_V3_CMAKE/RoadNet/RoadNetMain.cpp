@@ -22,7 +22,7 @@ using namespace std;
 
 unsigned int NUM_OF_FRAMES = 0;
 double INIT_FPS_TIME = 0;
-bool GLOBAL_MOUSE_DOWN = false, GLOBAL_PAUSE = false;
+bool GLOBAL_MOUSE_DOWN = false, GLOBAL_PAUSE = false, GLOBAL_DRAW_BORDERS = false;
 
 enum State {
     draw, wipe
@@ -50,7 +50,6 @@ time_t paused_time = 0;
 void Update() {
 
     time_t now = clock();
-    cout << "Now Paused Time: " << now << "\t" << paused_time << "\t" << oldtime << "\n";
     float dt = (float) (now - oldtime) / CLOCKS_PER_SEC;
     oldtime = now;
 
@@ -223,7 +222,9 @@ void KeyButton(int key, bool down, bool shift, bool control) {
                 globalState = wipe;
                 infoPanel.status = "Wipe";
                 break;
-                // Add other key actions
+            case GLFW_KEY_B:
+                GLOBAL_DRAW_BORDERS = !GLOBAL_DRAW_BORDERS;
+                break;
         }
     }
 }
@@ -243,6 +244,10 @@ void Display(GridPrimitive gridPrimitive) {
     for (auto &runnerLinkers: ROAD_RUNNERS) {
         runnerLinkers.second.vehicleRunner.Draw(infoPanel.logsMsg);
     }
+    if(GLOBAL_DRAW_BORDERS)
+    {
+        DrawBorders();
+    }
 
     infoPanel.InfoDisplay();
 
@@ -255,7 +260,7 @@ void UpdateAppVariables(int width, int height) {
     GLOBAL_H = height - H_EDGE_BUFFER;
 
     // Update Grid Width and Display Width
-    GRID_W = GLOBAL_W * 0.75, DISP_W = GLOBAL_W - (GLOBAL_W * 0.10); //GLOBAL_W - 150; // DISP_W = GLOBAL_W - GRID_W;
+    GRID_W = GLOBAL_W * 0.75, DISP_W = GLOBAL_W - (GLOBAL_W * 0.22); //GLOBAL_W - 150; // DISP_W = GLOBAL_W - GRID_W;
 
     // Update Difference of X-Axis AND Y-Axis
     DX = (float) GRID_W / NCOLS, DY = (float) GLOBAL_H / NROWS;
@@ -284,12 +289,6 @@ int main(int ac, char **av) {
     INIT_FPS_TIME = glfwGetTime();
 
     GridPrimitive gridPrimitive;
-
-    /* gridPrimitive.AddNewObjective(0, 1, 3, 0);
-
-     gridPrimitive.AddNewObjective(4, 2, 6, 3);
-
-     gridPrimitive.AddNewObjective(7, 3, 5, 2);*/
 
     for (int i = 0; i < 5; i++) {
         vec2 rndStPoint = GetRandomPoint();

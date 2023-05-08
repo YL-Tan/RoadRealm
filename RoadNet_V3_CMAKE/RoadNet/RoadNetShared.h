@@ -16,12 +16,12 @@ using namespace std;
 #define NROWS 12
 #define NCOLS 10
 #define H_EDGE_BUFFER 40
-#define W_EDGE_BUFFER 200
+#define W_EDGE_BUFFER 100
 
 int APP_WIDTH = 1000, APP_HEIGHT = 800, X_POS = 20, Y_POS = 20,
         GLOBAL_W = APP_WIDTH - W_EDGE_BUFFER, GLOBAL_H = APP_HEIGHT - H_EDGE_BUFFER;
 
-int GRID_W = GLOBAL_W * 0.75, DISP_W = GLOBAL_W - (GLOBAL_W * 0.10); // +  150;
+int GRID_W = GLOBAL_W * 0.75, DISP_W = GLOBAL_W - (GLOBAL_W * 0.22); // +  150;
 float DX = (float) GRID_W / NCOLS, DY = (float) GLOBAL_H / NROWS;
 
 const vec3 WHITE(1, 1, 1), BLACK(0, 0, 0), GREY(.5, .5, .5), RED(1, 0, 0),
@@ -56,26 +56,27 @@ struct InfoPanel {
     string numRoads;
 
     void InfoDisplay() {
-        Text(DISP_W, GLOBAL_H, WHITE, 10.0f, mouseSpaceDisp.c_str());
-        Text(DISP_W, GLOBAL_H - 20, ORANGE, 10.0f, mouseSpaceMoveDisp.c_str());
 
-        Text(DISP_W, GLOBAL_H - 40, WHITE, 10.0f, gridWinDim.c_str());
-        Text(DISP_W, GLOBAL_H - 60, WHITE, 10.0f, infoWinDim.c_str());
-        Text(DISP_W, GLOBAL_H - 80, WHITE, 10.0f, appWinDisp.c_str());
+        Text(DISP_W + 5, GLOBAL_H, WHITE, 10.0f, mouseSpaceDisp.c_str());
+        Text(DISP_W + 5, GLOBAL_H - 20, ORANGE, 10.0f, mouseSpaceMoveDisp.c_str());
 
-        Text(DISP_W, GLOBAL_H - 100, GREEN, 10.0f, gridPrimitiveDim.c_str());
+        Text(DISP_W + 5, GLOBAL_H - 40, WHITE, 10.0f, gridWinDim.c_str());
+        Text(DISP_W + 5, GLOBAL_H - 60, WHITE, 10.0f, infoWinDim.c_str());
+        Text(DISP_W + 5, GLOBAL_H - 80, WHITE, 10.0f, appWinDisp.c_str());
 
-        Text(DISP_W, GLOBAL_H - 120, PURPLE, 10.0f, errorMsg.c_str());
+        Text(DISP_W + 5, GLOBAL_H - 100, GREEN, 10.0f, gridPrimitiveDim.c_str());
 
-        Text(DISP_W, GLOBAL_H - 140, YELLOW, 10.0f, logsMsg.c_str());
+        Text(DISP_W + 5, GLOBAL_H - 120, PURPLE, 10.0f, errorMsg.c_str());
 
-        Text(DISP_W, GLOBAL_H - 160, WHITE, 10.0f, to_string(fpsDisp).c_str());
+        Text(DISP_W + 5, GLOBAL_H - 140, YELLOW, 10.0f, logsMsg.c_str());
 
-        Text(DISP_W, GLOBAL_H - 180, WHITE, 12.0f, timeDisplay.c_str());
+        Text(DISP_W + 5, GLOBAL_H - 160, WHITE, 10.0f, to_string(fpsDisp).c_str());
 
-        Text(DISP_W, GLOBAL_H - 200, WHITE, 12.0f, status.c_str());
+        Text(DISP_W + 5, GLOBAL_H - 180, WHITE, 12.0f, timeDisplay.c_str());
 
-        Text(DISP_W, GLOBAL_H - 220, WHITE, 10.0f, numRoads.c_str());
+        Text(DISP_W + 5, GLOBAL_H - 200, WHITE, 12.0f, status.c_str());
+
+        Text(DISP_W + 5, GLOBAL_H - 220, WHITE, 10.0f, numRoads.c_str());
     }
 };
 
@@ -114,6 +115,22 @@ struct NodePosition {
     bool operator==(NodePosition &i) { return i.row == row && i.col == col; }
 };
 
+void DrawBorders()
+{
+    // Top Line, (Top-Right -> Top-Left)
+    Line(vec2(GLOBAL_W, GLOBAL_H + (H_EDGE_BUFFER / 2) + 1 ), vec2(5, GLOBAL_H + (H_EDGE_BUFFER / 2) + 1), 1, WHITE );
+    // Left Line (Bottom-Left -> Top-Left)
+    Line(vec2(5, 5), vec2(5, GLOBAL_H + (H_EDGE_BUFFER / 2) + 1), 1, WHITE );
+
+    // Right Line (Top-Right -> Bottom-Right)
+    Line(vec2(GLOBAL_W, GLOBAL_H + (H_EDGE_BUFFER / 2) + 1 ), vec2(GLOBAL_W, 5), 1, WHITE );
+
+    // Mid Line, (Mid-Right, Mid-Left)
+    Line(vec2(DISP_W, GLOBAL_H + (H_EDGE_BUFFER / 2) + 1 ), vec2(DISP_W, 5), 1, WHITE );
+
+    // Bottom Line (Bottom-Left -> Bottom-Right)
+    Line(vec2(5, 5),  vec2(GLOBAL_W, 5), 1, WHITE );
+}
 
 vec3 DebugGetColor(DebugColorIndex colorIndex) {
     if (colorIndex == BLUE_COLOR_I) {
