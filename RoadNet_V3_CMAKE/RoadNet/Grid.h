@@ -118,9 +118,6 @@ public:
                      vec2(X_POS + (cell.currentPos.col + 0.5) * DX, Y_POS + (cell.currentPos.row + 0.0) * DY),
                      1.0f, cell.overlayColor);
             }
-            if (cell.currentState == POTENTIAL_ROAD) {
-                // FIXME
-            }
         }
     }
 
@@ -140,7 +137,6 @@ public:
             node->color = ORANGE;
             return *node;
         }
-        // FIXME
         if (node->currentState == POTENTIAL_ROAD) {
             node->currentState = node->transState;
             node->transState = POTENTIAL_ROAD;
