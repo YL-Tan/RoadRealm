@@ -17,12 +17,16 @@
 #include <chrono>
 #include <functional>
 #include <map>
+#include <iomanip>
+#include <sstream>
 
 using namespace std;
 
 unsigned int NUM_OF_FRAMES = 0;
 double INIT_FPS_TIME = 0;
 bool GLOBAL_MOUSE_DOWN = false, GLOBAL_PAUSE = false, GLOBAL_DRAW_BORDERS = false;
+double REPLENISH_INTERVAL = 10.0; // 10 seconds
+int REPLENISH_ROADS_NUM = 10;
 
 enum State {
     draw, wipe
@@ -37,6 +41,7 @@ State globalState = draw;
 time_t oldtime = clock();
 chrono::duration<double> gameClock;
 int currNumRoads = 10;
+double lastReplenishTime = 0.0;
 
 // vector<RoadRunnerLinker> ROAD_RUNNERS;
 
@@ -47,21 +52,49 @@ hash<string> STRING_HASH_FUN;
 // vector<Vehicle> VEHICLES_COLLECTION;
 time_t paused_time = 0;
 
+string formatDuration(const chrono::duration<double>& duration) {
+    int totalSeconds = static_cast<int>(duration.count());
+    int hours = totalSeconds / 3600;
+    int minutes = (totalSeconds % 3600) / 60;
+    int seconds = totalSeconds % 60;
+
+    stringstream ss;
+    ss << setw(2) << setfill('0') << hours << "H"
+        << setw(2) << setfill('0') << minutes << "M"
+        << setw(2) << setfill('0') << seconds << "S";
+
+    return ss.str();
+}
+
+void replenishRoads() {
+    if (gameClock.count() - lastReplenishTime >= REPLENISH_INTERVAL) {
+        currNumRoads += REPLENISH_ROADS_NUM;
+        cout << "Just replenished " << REPLENISH_ROADS_NUM << " roads to player" << endl;
+
+        lastReplenishTime = gameClock.count();
+    }
+}
+
 void Update() {
 
     time_t now = clock();
     float dt = (float) (now - oldtime) / CLOCKS_PER_SEC;
-    oldtime = now;
 
     if (!GLOBAL_PAUSE) {
-        for (auto &runnerLinkers: ROAD_RUNNERS) {
+        dt = (float)(now - oldtime) / CLOCKS_PER_SEC;
+        oldtime = now;
+        for (auto& runnerLinkers : ROAD_RUNNERS) {
             runnerLinkers.second.vehicleRunner.Update(dt);
         }
+        gameClock += chrono::duration<double>(dt);
+        replenishRoads();
+    }
+    else
+    {
+        oldtime = now;
     }
 
-    gameClock += chrono::duration<double>(dt);
-    infoPanel.timeDisplay = "Time: " + to_string(gameClock.count()) + "s";
-    paused_time = 0;
+    infoPanel.timeDisplay = "Time: " + formatDuration(gameClock);
 
     infoPanel.gridWinDim = "Grid Window: W: " + to_string(GRID_W) + " H: " + to_string(GLOBAL_H);
     infoPanel.infoWinDim = "Info Window: W: " + to_string(DISP_W) + " H: " + to_string(GLOBAL_H);
@@ -152,7 +185,6 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
         PREV_DRAGGED_CELLS.clear();
         CURRENT_CLICKED_CELL = vec2((NROWS + NCOLS), (NROWS + NCOLS));
     } else {
-        //FIXME
         if (CURRENT_CLICKED_CELL.x < NCOLS && CURRENT_CLICKED_CELL.y < NROWS) {
             Node getNode = gridPrimitive.NodeHandler(
                     CombineDigits((int) CURRENT_CLICKED_CELL.y, (int) CURRENT_CLICKED_CELL.x));
