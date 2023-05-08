@@ -157,29 +157,35 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
                 factoryIndex = counter;
                 // roadPathLinker.isLinked = true;
             }
-            currNumRoads -= 1;
+
             counter += 1;
         }
 
         bool validatePath = gridPrimitive.IsDestinationLinked(home, factory, homeIndex, factoryIndex);
+        if ((int)PREV_DRAGGED_CELLS.size() <= currNumRoads) {
 
-        if (validatePath) {
-            currNumRoads += 2; // compensate from including the starting and ending nodes.
-            // Hash PathKey
-            size_t hashValue = STRING_HASH_FUN(pathHashKey);
+            if (validatePath) {
+                currNumRoads += 2; // compensate from including the starting and ending nodes.
+                // Hash PathKey
+                size_t hashValue = STRING_HASH_FUN(pathHashKey);
 
-            RoadRunnerLinker runnerLinker(hashValue, vehicleRunner, true);
+                RoadRunnerLinker runnerLinker(hashValue, vehicleRunner, true);
 
-            ROAD_RUNNERS.insert({hashValue, runnerLinker});
-        } else {
-            currNumRoads = oldNumRoads;
+                ROAD_RUNNERS.insert({hashValue, runnerLinker});
+                currNumRoads -= (int) PREV_DRAGGED_CELLS.size();
+            } else {
+                currNumRoads = oldNumRoads;
+            }
+            if (globalState == wipe) {
+                cout << pathHashKey << endl;
+                size_t hashValue = STRING_HASH_FUN(pathHashKey);
+                ROAD_RUNNERS.erase(hashValue);
+                currNumRoads += (int) PREV_DRAGGED_CELLS.size() - 2;
+            }
         }
-        if (globalState == wipe)
+        else
         {
-            cout << pathHashKey << endl;
-            size_t hashValue = STRING_HASH_FUN(pathHashKey);
-            ROAD_RUNNERS.erase(hashValue);
-            currNumRoads += (int)PREV_DRAGGED_CELLS.size() - 2;
+            cout << "Not enough roads!" << endl;
         }
         // Clear
         PREV_DRAGGED_CELLS.clear();
