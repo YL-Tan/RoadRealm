@@ -250,7 +250,7 @@ void MouseMove(float x, float y, bool leftDown, bool rightDown) {
 void KeyButton(int key, bool down, bool shift, bool control) {
     if (down == GLFW_PRESS) {
         switch (key) {
-            case GLFW_KEY_P:
+            case GLFW_KEY_P: case GLFW_KEY_SPACE:
                 GLOBAL_PAUSE = !GLOBAL_PAUSE;
                 break;
             case GLFW_KEY_D:
@@ -312,7 +312,7 @@ void Resize(int width, int height) {
 }
 
 const char *usage = R"(
-	Press P to pause the game
+	Press P or space key to pause the game
 )";
 
 int main(int ac, char **av) {
