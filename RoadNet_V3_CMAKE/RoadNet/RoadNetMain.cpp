@@ -42,6 +42,7 @@ time_t oldtime = clock();
 chrono::duration<double> gameClock;
 int currNumRoads = 10;
 double lastReplenishTime = 0.0;
+string status = "Draw";
 
 // vector<RoadRunnerLinker> ROAD_RUNNERS;
 
@@ -101,6 +102,7 @@ void Update() {
     infoPanel.appWinDisp = "Global Window: W: " + to_string(GLOBAL_W) + " H: " + to_string(GLOBAL_H);
     infoPanel.gridPrimitiveDim = "Grid DIM: (" + to_string(NROWS) + " by " + to_string(NCOLS) + ")";
     infoPanel.numRoads = "Number of Roads: " + to_string(currNumRoads);
+    infoPanel.status = status;
 }
 
 Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, vector<NodePosition> &path, string &pathKey) {
@@ -260,12 +262,16 @@ void KeyButton(int key, bool down, bool shift, bool control) {
                 GLOBAL_PAUSE = !GLOBAL_PAUSE;
                 break;
             case GLFW_KEY_D:
-                globalState = draw;
-                infoPanel.status = "Draw";
+                if(globalState == wipe){
+                    globalState = draw;
+                    status = "Draw";
+                }else {
+                    globalState = wipe;
+                    status = "Delete";
+                }
                 break;
             case GLFW_KEY_W:
                 globalState = wipe;
-                infoPanel.status = "Wipe";
                 break;
             case GLFW_KEY_B:
                 GLOBAL_DRAW_BORDERS = !GLOBAL_DRAW_BORDERS;
