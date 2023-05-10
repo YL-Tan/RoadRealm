@@ -106,12 +106,13 @@ void Update() {
 }
 
 Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, vector<NodePosition> &path, string &pathKey) {
-    if (col < NCOLS && row < NROWS) {
+    if (col < NCOLS && row < NROWS && col > -1 && row > -1) {
         // Get Potential Index, Will Explain On Tuesday,
         // [0,0] bottom Left
         int potentialIndex = CombineDigits(row, col);
-
+        cout << col << "\t" << row << "\t" << potentialIndex << "\n";
         Node node = gridPrimitive.NodeHandler(potentialIndex);
+
         path.push_back(node.currentPos);
 
         pathKey += to_string(node.currentPos.row) + to_string(node.currentPos.col);
@@ -120,7 +121,6 @@ Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, vector<Node
         infoPanel.errorMsg = "Success";
 
         return node;
-
     } else {
         infoPanel.errorMsg = "Out Of Grid Mouse Click";
     }
@@ -193,7 +193,8 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
         PREV_DRAGGED_CELLS.clear();
         CURRENT_CLICKED_CELL = vec2((NROWS + NCOLS), (NROWS + NCOLS));
     } else {
-        if (CURRENT_CLICKED_CELL.x < NCOLS && CURRENT_CLICKED_CELL.y < NROWS) {
+        if (CURRENT_CLICKED_CELL.x < NCOLS && CURRENT_CLICKED_CELL.y < NROWS 
+            && CURRENT_CLICKED_CELL.x > -1 && CURRENT_CLICKED_CELL.y > -1) {
             Node getNode = gridPrimitive.NodeHandler(
                     CombineDigits((int) CURRENT_CLICKED_CELL.y, (int) CURRENT_CLICKED_CELL.x));
             cout << "Current State: " << getNode.currentState << "\n";
