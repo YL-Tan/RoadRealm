@@ -97,7 +97,7 @@ Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, vector<Node
         // Get Potential Index, Will Explain On Tuesday,
         // [0,0] bottom Left
         int potentialIndex = CombineDigits(row, col);
-        cout << col << "\t" << row << "\t" << potentialIndex << "\n";
+        // cout << col << "\t" << row << "\t" << potentialIndex << "\n";
         Node node = gridPrimitive.NodeHandler(potentialIndex);
 
         path.push_back(node.currentPos);
@@ -131,7 +131,6 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
             Node getNode = ToggleNodeState((int) cell.x, (int) cell.y, gridPrimitive, vehicleRunner.runnerPath,
                                            pathHashKey);
 
-            cout << "Current State: -m " << getNode.currentState << "\n";
             if (getNode.currentState == CLOSED_HOUSE) {
                 cout << "Placement House: " << counter << "\n";
 
@@ -182,7 +181,7 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
             && CURRENT_CLICKED_CELL.x > -1 && CURRENT_CLICKED_CELL.y > -1) {
             Node getNode = gridPrimitive.NodeHandler(
                     CombineDigits((int) CURRENT_CLICKED_CELL.y, (int) CURRENT_CLICKED_CELL.x));
-            cout << "Current State: " << getNode.currentState << "\n";
+            //cout << "Current State: " << getNode.currentState << "\n";
         }
         CURRENT_CLICKED_CELL = vec2((NROWS + NCOLS), (NROWS + NCOLS));
     }
