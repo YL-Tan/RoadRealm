@@ -60,9 +60,6 @@ public:
 
                     return objectives.destLinked;
                 }
-                else{
-                    objectives.destLinked = false;
-                }
             }
         }
         return false;
