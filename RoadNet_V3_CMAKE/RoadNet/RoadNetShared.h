@@ -17,6 +17,7 @@ using namespace std;
 #define NCOLS 10
 #define H_EDGE_BUFFER 40
 #define W_EDGE_BUFFER 100
+#define INFO_MSG_SIZE 9
 
 int APP_WIDTH = 1000, APP_HEIGHT = 800, X_POS = 20, Y_POS = 20,
         GLOBAL_W = APP_WIDTH - W_EDGE_BUFFER, GLOBAL_H = APP_HEIGHT - H_EDGE_BUFFER;
@@ -40,43 +41,58 @@ enum DebugColorIndex {
     GREEN_COLOR_1
 };
 
+enum InfoLabelsIndex {
+    MOUSE_CLICK_LABEL = 0,
+    MOUSE_MOVE_LABEL = 1,
+    DIMS_LABEL = 2,
+    FPS_LABEL = 3,
+    TIME_LABEL = 4,
+    NUM_OF_ROAD_LABEL = 5,
+    GRID_STATE_LABEL = 6,
+    ERROR_MSG_LABEL = 7,
+    LOGS_MSG_LABEL = 8
+};
 
 struct InfoPanel {
-    string mouseSpaceDisp;
-    string mouseSpaceMoveDisp;
-    string gridWinDim;
-    string infoWinDim;
-    string appWinDisp;
-    string gridPrimitiveDim;
-    string errorMsg;
-    string logsMsg;
-    double fpsDisp = 0;
-    string timeDisplay;
-    string status;
-    string numRoads;
+
+    struct Message {
+        string msgInfo = "";
+        vec3 msgColor = WHITE;
+
+        Message(string info, const vec3 &color) {
+            this->msgInfo = info;
+            this->msgColor = color;
+        }
+    };
+
+    vector<Message> infoPanelMessages = {};
+
+    InfoPanel() {
+        for (int i = 0; i < INFO_MSG_SIZE; i++) {
+            infoPanelMessages.push_back(Message("", WHITE));
+        }
+    }
 
     void InfoDisplay() {
+        int maxHeight = GLOBAL_H;
+        for (Message &message: infoPanelMessages) {
+            Text(DISP_W + 5, maxHeight, message.msgColor, 10.0f, message.msgInfo.c_str());
 
-        Text(DISP_W + 5, GLOBAL_H, WHITE, 10.0f, mouseSpaceDisp.c_str());
-        Text(DISP_W + 5, GLOBAL_H - 20, ORANGE, 10.0f, mouseSpaceMoveDisp.c_str());
+            maxHeight -= 20;
+        }
+    }
 
-        Text(DISP_W + 5, GLOBAL_H - 40, WHITE, 10.0f, gridWinDim.c_str());
-        Text(DISP_W + 5, GLOBAL_H - 60, WHITE, 10.0f, infoWinDim.c_str());
-        Text(DISP_W + 5, GLOBAL_H - 80, WHITE, 10.0f, appWinDisp.c_str());
+    bool AddMessage(InfoLabelsIndex labelsIndex, const string &msg, const vec3 &msgColor) {
+        if (!msg.empty()) {
+            // Formulate Message
+            // Message message(msg, msgColor);
+            // Add To Vector
+            infoPanelMessages.at(labelsIndex).msgInfo = msg;
+            infoPanelMessages.at(labelsIndex).msgColor = msgColor;
 
-        Text(DISP_W + 5, GLOBAL_H - 100, GREEN, 10.0f, gridPrimitiveDim.c_str());
-
-        Text(DISP_W + 5, GLOBAL_H - 120, PURPLE, 10.0f, errorMsg.c_str());
-
-        Text(DISP_W + 5, GLOBAL_H - 140, YELLOW, 10.0f, logsMsg.c_str());
-
-        Text(DISP_W + 5, GLOBAL_H - 160, WHITE, 10.0f, to_string(fpsDisp).c_str());
-
-        Text(DISP_W + 5, GLOBAL_H - 180, WHITE, 12.0f, timeDisplay.c_str());
-
-        Text(DISP_W + 5, GLOBAL_H - 200, WHITE, 12.0f, status.c_str());
-
-        Text(DISP_W + 5, GLOBAL_H - 220, WHITE, 10.0f, numRoads.c_str());
+            return true;
+        }
+        return false;
     }
 };
 
@@ -115,21 +131,20 @@ struct NodePosition {
     bool operator==(NodePosition &i) { return i.row == row && i.col == col; }
 };
 
-void DrawBorders()
-{
+void DrawBorders() {
     // Top Line, (Top-Right -> Top-Left)
-    Line(vec2(GLOBAL_W, GLOBAL_H + (H_EDGE_BUFFER / 2) + 1 ), vec2(5, GLOBAL_H + (H_EDGE_BUFFER / 2) + 1), 1, WHITE );
+    Line(vec2(GLOBAL_W, GLOBAL_H + (H_EDGE_BUFFER / 2) + 1), vec2(5, GLOBAL_H + (H_EDGE_BUFFER / 2) + 1), 1, WHITE);
     // Left Line (Bottom-Left -> Top-Left)
-    Line(vec2(5, 5), vec2(5, GLOBAL_H + (H_EDGE_BUFFER / 2) + 1), 1, WHITE );
+    Line(vec2(5, 5), vec2(5, GLOBAL_H + (H_EDGE_BUFFER / 2) + 1), 1, WHITE);
 
     // Right Line (Top-Right -> Bottom-Right)
-    Line(vec2(GLOBAL_W, GLOBAL_H + (H_EDGE_BUFFER / 2) + 1 ), vec2(GLOBAL_W, 5), 1, WHITE );
+    Line(vec2(GLOBAL_W, GLOBAL_H + (H_EDGE_BUFFER / 2) + 1), vec2(GLOBAL_W, 5), 1, WHITE);
 
     // Mid Line, (Mid-Right, Mid-Left)
-    Line(vec2(DISP_W, GLOBAL_H + (H_EDGE_BUFFER / 2) + 1 ), vec2(DISP_W, 5), 1, WHITE );
+    Line(vec2(DISP_W, GLOBAL_H + (H_EDGE_BUFFER / 2) + 1), vec2(DISP_W, 5), 1, WHITE);
 
     // Bottom Line (Bottom-Left -> Bottom-Right)
-    Line(vec2(5, 5),  vec2(GLOBAL_W, 5), 1, WHITE );
+    Line(vec2(5, 5), vec2(GLOBAL_W, 5), 1, WHITE);
 }
 
 vec3 DebugGetColor(DebugColorIndex colorIndex) {

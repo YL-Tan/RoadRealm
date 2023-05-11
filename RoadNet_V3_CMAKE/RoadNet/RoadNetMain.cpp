@@ -53,7 +53,7 @@ hash<string> STRING_HASH_FUN;
 // vector<Vehicle> VEHICLES_COLLECTION;
 time_t paused_time = 0;
 
-string formatDuration(const chrono::duration<double>& duration) {
+string formatDuration(const chrono::duration<double> &duration) {
     int totalSeconds = static_cast<int>(duration.count());
     int hours = totalSeconds / 3600;
     int minutes = (totalSeconds % 3600) / 60;
@@ -61,8 +61,8 @@ string formatDuration(const chrono::duration<double>& duration) {
 
     stringstream ss;
     ss << setw(2) << setfill('0') << hours << "H"
-        << setw(2) << setfill('0') << minutes << "M"
-        << setw(2) << setfill('0') << seconds << "S";
+       << setw(2) << setfill('0') << minutes << "M"
+       << setw(2) << setfill('0') << seconds << "S";
 
     return ss.str();
 }
@@ -82,27 +82,31 @@ void Update() {
     float dt = (float) (now - oldtime) / CLOCKS_PER_SEC;
 
     if (!GLOBAL_PAUSE) {
-        dt = (float)(now - oldtime) / CLOCKS_PER_SEC;
+        dt = (float) (now - oldtime) / CLOCKS_PER_SEC;
         oldtime = now;
-        for (auto& runnerLinkers : ROAD_RUNNERS) {
+        for (auto &runnerLinkers: ROAD_RUNNERS) {
             runnerLinkers.second.vehicleRunner.Update(dt);
         }
         gameClock += chrono::duration<double>(dt);
         replenishRoads();
-    }
-    else
-    {
+    } else {
         oldtime = now;
     }
 
-    infoPanel.timeDisplay = "Time: " + formatDuration(gameClock);
+    infoPanel.AddMessage(TIME_LABEL, "Time: " + formatDuration(gameClock), WHITE);
+    infoPanel.AddMessage(DIMS_LABEL, "Grid DIM: (" + to_string(NROWS) + " by " + to_string(NCOLS) + ")", WHITE);
+    infoPanel.AddMessage(NUM_OF_ROAD_LABEL, "Number of Roads: " + to_string(currNumRoads), WHITE);
+    infoPanel.AddMessage(GRID_STATE_LABEL, status, WHITE);
 
-    infoPanel.gridWinDim = "Grid Window: W: " + to_string(GRID_W) + " H: " + to_string(GLOBAL_H);
-    infoPanel.infoWinDim = "Info Window: W: " + to_string(DISP_W) + " H: " + to_string(GLOBAL_H);
-    infoPanel.appWinDisp = "Global Window: W: " + to_string(GLOBAL_W) + " H: " + to_string(GLOBAL_H);
-    infoPanel.gridPrimitiveDim = "Grid DIM: (" + to_string(NROWS) + " by " + to_string(NCOLS) + ")";
-    infoPanel.numRoads = "Number of Roads: " + to_string(currNumRoads);
-    infoPanel.status = status;
+
+    /* infoPanel.timeDisplay = "Time: " + formatDuration(gameClock);
+
+     infoPanel.gridWinDim = "Grid Window: W: " + to_string(GRID_W) + " H: " + to_string(GLOBAL_H);
+     infoPanel.infoWinDim = "Info Window: W: " + to_string(DISP_W) + " H: " + to_string(GLOBAL_H);
+     infoPanel.appWinDisp = "Global Window: W: " + to_string(GLOBAL_W) + " H: " + to_string(GLOBAL_H);
+     infoPanel.gridPrimitiveDim = "Grid DIM: (" + to_string(NROWS) + " by " + to_string(NCOLS) + ")";
+     infoPanel.numRoads = "Number of Roads: " + to_string(currNumRoads);
+     infoPanel.status = status;*/
 }
 
 Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, vector<NodePosition> &path, string &pathKey) {
@@ -117,12 +121,15 @@ Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, vector<Node
 
         pathKey += to_string(node.currentPos.row) + to_string(node.currentPos.col);
 
-        infoPanel.mouseSpaceDisp = "Mouse Click: X" + to_string(col) + " Y " + to_string(row);
-        infoPanel.errorMsg = "Success";
+        infoPanel.AddMessage(MOUSE_CLICK_LABEL, "Mouse Click: X" + to_string(col) + " Y " + to_string(row), WHITE);
+        infoPanel.AddMessage(ERROR_MSG_LABEL, "Success", WHITE);
+        /*infoPanel.mouseSpaceDisp = "Mouse Click: X" + to_string(col) + " Y " + to_string(row);
+        infoPanel.errorMsg = "Success";*/
 
         return node;
     } else {
-        infoPanel.errorMsg = "Out Of Grid Mouse Click";
+        // infoPanel.errorMsg = "Out Of Grid Mouse Click";
+        infoPanel.AddMessage(ERROR_MSG_LABEL, "Out Of Grid Mouse Click", WHITE);
     }
     return {};
 }
@@ -164,7 +171,7 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
         }
 
         bool validatePath = gridPrimitive.IsDestinationLinked(home, factory, homeIndex, factoryIndex);
-        if ((int)PREV_DRAGGED_CELLS.size() <= currNumRoads) {
+        if ((int) PREV_DRAGGED_CELLS.size() <= currNumRoads) {
 
             if (validatePath) {
                 currNumRoads += 2; // compensate from including the starting and ending nodes.
@@ -184,16 +191,14 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
                 ROAD_RUNNERS.erase(hashValue);
                 currNumRoads += (int) PREV_DRAGGED_CELLS.size() - 2;
             }
-        }
-        else
-        {
+        } else {
             cout << "Not enough roads!" << endl;
         }
         // Clear
         PREV_DRAGGED_CELLS.clear();
         CURRENT_CLICKED_CELL = vec2((NROWS + NCOLS), (NROWS + NCOLS));
     } else {
-        if (CURRENT_CLICKED_CELL.x < NCOLS && CURRENT_CLICKED_CELL.y < NROWS 
+        if (CURRENT_CLICKED_CELL.x < NCOLS && CURRENT_CLICKED_CELL.y < NROWS
             && CURRENT_CLICKED_CELL.x > -1 && CURRENT_CLICKED_CELL.y > -1) {
             Node getNode = gridPrimitive.NodeHandler(
                     CombineDigits((int) CURRENT_CLICKED_CELL.y, (int) CURRENT_CLICKED_CELL.x));
@@ -249,7 +254,8 @@ void MouseButton(float xmouse, float ymouse, bool left, bool down) {
 
 void MouseMove(float x, float y, bool leftDown, bool rightDown) {
     int col = (int) ((x - X_POS) / DX), row = (int) ((y - Y_POS) / DY);
-    infoPanel.mouseSpaceMoveDisp = "Mouse Move: X" + to_string(col) + " Y " + to_string(row);
+    // infoPanel.mouseSpaceMoveDisp = "Mouse Move: X" + to_string(col) + " Y " + to_string(row);
+    infoPanel.AddMessage(MOUSE_MOVE_LABEL, "Mouse Move: X" + to_string(col) + " Y " + to_string(row), WHITE);
 
     if (GLOBAL_MOUSE_DOWN) {
         AccumulateDraggedCell(col, row);
@@ -259,14 +265,15 @@ void MouseMove(float x, float y, bool leftDown, bool rightDown) {
 void KeyButton(int key, bool down, bool shift, bool control) {
     if (down == GLFW_PRESS) {
         switch (key) {
-            case GLFW_KEY_P: case GLFW_KEY_SPACE:
+            case GLFW_KEY_P:
+            case GLFW_KEY_SPACE:
                 GLOBAL_PAUSE = !GLOBAL_PAUSE;
                 break;
             case GLFW_KEY_D:
-                if(globalState == wipe){
+                if (globalState == wipe) {
                     globalState = draw;
                     status = "Draw";
-                }else {
+                } else {
                     globalState = wipe;
                     status = "Delete";
                 }
@@ -294,10 +301,12 @@ void Display(GridPrimitive gridPrimitive) {
     gridPrimitive.DrawGrid();
 
     for (auto &runnerLinkers: ROAD_RUNNERS) {
-        runnerLinkers.second.vehicleRunner.Draw(infoPanel.logsMsg);
+        string runnerDrawLog;
+        runnerLinkers.second.vehicleRunner.Draw(runnerDrawLog);
+
+        infoPanel.AddMessage(LOGS_MSG_LABEL, runnerDrawLog, WHITE);
     }
-    if(GLOBAL_DRAW_BORDERS)
-    {
+    if (GLOBAL_DRAW_BORDERS) {
         DrawBorders();
     }
 
@@ -349,11 +358,15 @@ int main(int ac, char **av) {
         gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y, (int) rndEdPoint.x);
     }
 
+    // Reserve Vector Size
+    double framesPerSecond = 0;
     while (!glfwWindowShouldClose(w)) {
         Update();
 
         // FPS Calculator
-        infoPanel.fpsDisp = NUM_OF_FRAMES / (glfwGetTime() - INIT_FPS_TIME);
+        framesPerSecond = NUM_OF_FRAMES / (glfwGetTime() - INIT_FPS_TIME);
+
+        infoPanel.AddMessage(FPS_LABEL, to_string(framesPerSecond), WHITE);
 
         Display(gridPrimitive);
 
