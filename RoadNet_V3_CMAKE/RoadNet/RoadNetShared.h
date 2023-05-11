@@ -33,12 +33,8 @@ enum NodeStates {
     OPEN, CLOSED_ROAD, CLOSED_HOUSE, CLOSED_FACTORY, POTENTIAL_ROAD
 };
 
-enum DebugColorIndex {
-    BLUE_COLOR_I,
-    ORANGE_COLOR_I,
-    PURPLE_COLOR_I,
-    RED_COLOR_I,
-    GREEN_COLOR_1
+enum GameplayState {
+    DRAW_STATE, WIPE_STATE
 };
 
 enum InfoLabelsIndex {
@@ -84,9 +80,7 @@ struct InfoPanel {
 
     bool AddMessage(InfoLabelsIndex labelsIndex, const string &msg, const vec3 &msgColor) {
         if (!msg.empty()) {
-            // Formulate Message
-            // Message message(msg, msgColor);
-            // Add To Vector
+            // Add Message To Vector
             infoPanelMessages.at(labelsIndex).msgInfo = msg;
             infoPanelMessages.at(labelsIndex).msgColor = msgColor;
 
@@ -145,27 +139,6 @@ void DrawBorders() {
 
     // Bottom Line (Bottom-Left -> Bottom-Right)
     Line(vec2(5, 5), vec2(GLOBAL_W, 5), 1, WHITE);
-}
-
-vec3 DebugGetColor(DebugColorIndex colorIndex) {
-    if (colorIndex == BLUE_COLOR_I) {
-        return BLUE;
-    }
-    if (colorIndex == ORANGE_COLOR_I) {
-        return ORANGE;
-    }
-    if (colorIndex == PURPLE_COLOR_I) {
-        return PURPLE;
-    }
-    if (colorIndex == RED_COLOR_I) {
-        return RED;
-    }
-    return GREEN;
-}
-
-vec3 GetRandomDebugColor() {
-    int randomIndex = rand() % 5 + 0;
-    return DebugGetColor((DebugColorIndex) randomIndex);
 }
 
 void GetRandomDistribution(int distribLimit, int numOfRndValues, vector<int> &distribRndPlacement) {

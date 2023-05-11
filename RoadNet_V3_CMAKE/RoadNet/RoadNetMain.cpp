@@ -28,15 +28,12 @@ bool GLOBAL_MOUSE_DOWN = false, GLOBAL_PAUSE = false, GLOBAL_DRAW_BORDERS = fals
 double REPLENISH_INTERVAL = 10.0; // 10 seconds
 int REPLENISH_ROADS_NUM = 10;
 
-enum State {
-    draw, wipe
-};
 vec2 CURRENT_CLICKED_CELL((NROWS + NCOLS), (NROWS + NCOLS));
 
 set<vec2> PREV_DRAGGED_CELLS;
 
 InfoPanel infoPanel;
-State globalState = draw;
+GameplayState globalState = DRAW_STATE;
 
 time_t oldtime = clock();
 chrono::duration<double> gameClock;
@@ -44,14 +41,9 @@ int currNumRoads = 10;
 double lastReplenishTime = 0.0;
 string status = "Draw";
 
-// vector<RoadRunnerLinker> ROAD_RUNNERS;
-
 map<size_t, RoadRunnerLinker> ROAD_RUNNERS;
 
 hash<string> STRING_HASH_FUN;
-
-// vector<Vehicle> VEHICLES_COLLECTION;
-time_t paused_time = 0;
 
 string formatDuration(const chrono::duration<double> &duration) {
     int totalSeconds = static_cast<int>(duration.count());
@@ -98,15 +90,6 @@ void Update() {
     infoPanel.AddMessage(NUM_OF_ROAD_LABEL, "Number of Roads: " + to_string(currNumRoads), WHITE);
     infoPanel.AddMessage(GRID_STATE_LABEL, status, WHITE);
 
-
-    /* infoPanel.timeDisplay = "Time: " + formatDuration(gameClock);
-
-     infoPanel.gridWinDim = "Grid Window: W: " + to_string(GRID_W) + " H: " + to_string(GLOBAL_H);
-     infoPanel.infoWinDim = "Info Window: W: " + to_string(DISP_W) + " H: " + to_string(GLOBAL_H);
-     infoPanel.appWinDisp = "Global Window: W: " + to_string(GLOBAL_W) + " H: " + to_string(GLOBAL_H);
-     infoPanel.gridPrimitiveDim = "Grid DIM: (" + to_string(NROWS) + " by " + to_string(NCOLS) + ")";
-     infoPanel.numRoads = "Number of Roads: " + to_string(currNumRoads);
-     infoPanel.status = status;*/
 }
 
 Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, vector<NodePosition> &path, string &pathKey) {
@@ -123,12 +106,9 @@ Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, vector<Node
 
         infoPanel.AddMessage(MOUSE_CLICK_LABEL, "Mouse Click: X" + to_string(col) + " Y " + to_string(row), WHITE);
         infoPanel.AddMessage(ERROR_MSG_LABEL, "Success", WHITE);
-        /*infoPanel.mouseSpaceDisp = "Mouse Click: X" + to_string(col) + " Y " + to_string(row);
-        infoPanel.errorMsg = "Success";*/
 
         return node;
     } else {
-        // infoPanel.errorMsg = "Out Of Grid Mouse Click";
         infoPanel.AddMessage(ERROR_MSG_LABEL, "Out Of Grid Mouse Click", WHITE);
     }
     return {};
@@ -185,7 +165,7 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
             } else {
                 currNumRoads = oldNumRoads;
             }
-            if (globalState == wipe) {
+            if (globalState == WIPE_STATE) {
                 cout << pathHashKey << endl;
                 size_t hashValue = STRING_HASH_FUN(pathHashKey);
                 ROAD_RUNNERS.erase(hashValue);
@@ -254,7 +234,7 @@ void MouseButton(float xmouse, float ymouse, bool left, bool down) {
 
 void MouseMove(float x, float y, bool leftDown, bool rightDown) {
     int col = (int) ((x - X_POS) / DX), row = (int) ((y - Y_POS) / DY);
-    // infoPanel.mouseSpaceMoveDisp = "Mouse Move: X" + to_string(col) + " Y " + to_string(row);
+
     infoPanel.AddMessage(MOUSE_MOVE_LABEL, "Mouse Move: X" + to_string(col) + " Y " + to_string(row), WHITE);
 
     if (GLOBAL_MOUSE_DOWN) {
@@ -266,20 +246,23 @@ void KeyButton(int key, bool down, bool shift, bool control) {
     if (down == GLFW_PRESS) {
         switch (key) {
             case GLFW_KEY_P:
+                GLOBAL_PAUSE = !GLOBAL_PAUSE;
+                break;
             case GLFW_KEY_SPACE:
                 GLOBAL_PAUSE = !GLOBAL_PAUSE;
                 break;
             case GLFW_KEY_D:
-                if (globalState == wipe) {
-                    globalState = draw;
+                if (globalState == WIPE_STATE) {
+                    globalState = DRAW_STATE;
                     status = "Draw";
                 } else {
-                    globalState = wipe;
+                    globalState = WIPE_STATE;
                     status = "Delete";
                 }
                 break;
             case GLFW_KEY_W:
-                globalState = wipe;
+                globalState = WIPE_STATE;
+                status = "Delete";
                 break;
             case GLFW_KEY_B:
                 GLOBAL_DRAW_BORDERS = !GLOBAL_DRAW_BORDERS;
@@ -321,7 +304,7 @@ void UpdateAppVariables(int width, int height) {
     GLOBAL_H = height - H_EDGE_BUFFER;
 
     // Update Grid Width and Display Width
-    GRID_W = GLOBAL_W * 0.75, DISP_W = GLOBAL_W - (GLOBAL_W * 0.22); //GLOBAL_W - 150; // DISP_W = GLOBAL_W - GRID_W;
+    GRID_W = GLOBAL_W * 0.75, DISP_W = GLOBAL_W - (GLOBAL_W * 0.22);
 
     // Update Difference of X-Axis AND Y-Axis
     DX = (float) GRID_W / NCOLS, DY = (float) GLOBAL_H / NROWS;
