@@ -377,6 +377,7 @@ int main(int ac, char** av) {
 
     double framesPerSecond = 0;
     while (!glfwWindowShouldClose(w)) {
+        infoPanel.AddMessage(FPS_LABEL, to_string(framesPerSecond), WHITE);
         if (application == GAME_STATE) {
 
             Update();
@@ -403,12 +404,16 @@ int main(int ac, char** av) {
             backGround.Display();
             myStartButton.Display();
             myQuitButton.Display();
+            string temp = "STR";
+            Text(DISP_W + 5, GLOBAL_H, WHITE, 15.0f, temp.c_str());
+
 
             myStartButton.SetScale(vec2(.2f, .2f));
             myStartButton.SetPosition(vec2(-.5f, -.5f));
             myQuitButton.SetScale(vec2(.2f, .2f));
             myQuitButton.SetPosition(vec2(.5f, -.5f));
         }
+        infoPanel.AddMessage(FPS_LABEL, to_string(framesPerSecond), WHITE);
         glfwSwapBuffers(w);
         glfwPollEvents();
     }
