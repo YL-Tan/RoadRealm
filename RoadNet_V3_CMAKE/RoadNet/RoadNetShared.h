@@ -73,10 +73,10 @@ struct InfoPanel {
         }
     }
 
-    void InfoDisplay() {
+    void InfoDisplay(float fontScale) {
         int maxHeight = GLOBAL_H;
         for (Message &message: infoPanelMessages) {
-            Text(DISP_W + 5, maxHeight, message.msgColor, 10.0f, message.msgInfo.c_str());
+            Text(DISP_W + 5, maxHeight, message.msgColor, fontScale, message.msgInfo.c_str());
 
             maxHeight -= 20;
         }
