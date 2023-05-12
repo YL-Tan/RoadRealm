@@ -37,6 +37,10 @@ enum GameplayState {
     DRAW_STATE, WIPE_STATE
 };
 
+enum ApplicationStates {
+    STARTING_MENU, GAME_STATE
+};
+
 enum InfoLabelsIndex {
     MOUSE_CLICK_LABEL = 0,
     MOUSE_MOVE_LABEL = 1,
@@ -238,6 +242,13 @@ struct Node {
     Node(int row, int col) {
         currentPos.row = row;
         currentPos.col = col;
+    }
+
+    void NodeReset() {
+        this->color = WHITE;
+        this->overlayColor = WHITE;
+        this->currentState = OPEN;
+        this->transState = POTENTIAL_ROAD;
     }
 };
 

@@ -19,6 +19,7 @@
 #include <map>
 #include <iomanip>
 #include <sstream>
+#include "Sprite.h"
 
 using namespace std;
 
@@ -34,6 +35,10 @@ set<vec2> PREV_DRAGGED_CELLS;
 
 InfoPanel infoPanel;
 GameplayState globalState = DRAW_STATE;
+ApplicationStates application = STARTING_MENU;
+Sprite myResetButton, myExitButton, myStartButton, myQuitButton, backGround;
+GridPrimitive gridPrimitive;
+GLFWwindow* w = InitGLFW(100, 100, APP_WIDTH, APP_HEIGHT, "RoadRealm");
 
 time_t oldtime = clock();
 chrono::duration<double> gameClock;
@@ -222,11 +227,52 @@ bool AccumulateDraggedCell(int col, int row) {
     return false;
 }
 
+void resetGameState() {
+    GLOBAL_MOUSE_DOWN = false;
+    GLOBAL_PAUSE = false;
+    GLOBAL_DRAW_BORDERS = false;
+    currNumRoads = 10;
+    lastReplenishTime = 0.0;
+    status = "Draw";
+    infoPanel.AddMessage(ERROR_MSG_LABEL, "", WHITE);
+    infoPanel.AddMessage(LOGS_MSG_LABEL, "Reset", WHITE);
+    gameClock = chrono::duration<double>(0);
+
+    PREV_DRAGGED_CELLS.clear();
+    ROAD_RUNNERS.clear();
+
+    gridPrimitive.GridReset();
+    for (int i = 0; i < 5; i++) {
+        vec2 rndStPoint = GetRandomPoint();
+        vec2 rndEdPoint = GetRandomPoint();
+
+        gridPrimitive.AddNewObjective((int)rndStPoint.y, (int)rndStPoint.x, (int)rndEdPoint.y, (int)rndEdPoint.x);
+    }
+}
+
 void MouseButton(float xmouse, float ymouse, bool left, bool down) {
     if (down) {
         GLOBAL_MOUSE_DOWN = true;
-        AccumulateDraggedCell(xmouse, ymouse);
-    } else {
+
+        if (application == GAME_STATE && myResetButton.Hit(xmouse, ymouse)) {
+            resetGameState();
+        }
+        else if (application == GAME_STATE && myExitButton.Hit(xmouse, ymouse)) {
+            application = STARTING_MENU;
+            resetGameState();
+            infoPanel.AddMessage(LOGS_MSG_LABEL, "", WHITE);
+        }
+        else if (application == STARTING_MENU && myStartButton.Hit(xmouse, ymouse)) {
+            application = GAME_STATE;
+        }
+        else if (application == STARTING_MENU && myQuitButton.Hit(xmouse, ymouse)) {
+            glfwSetWindowShouldClose(w, true);
+        }
+        else {
+            AccumulateDraggedCell(xmouse, ymouse);
+        }
+    }
+    else {
         GLOBAL_MOUSE_DOWN = false;
     }
 }
@@ -315,14 +361,12 @@ void Resize(int width, int height) {
     glFlush();
 }
 
-const char *usage = R"(
-	Press P or space key to pause the game
-)";
-
-int main(int ac, char **av) {
-    GLFWwindow *w = InitGLFW(100, 100, APP_WIDTH, APP_HEIGHT, "RoadRealm");
-
-    printf("Usage:%s", usage);
+int main(int ac, char** av) {
+    myResetButton.Initialize("RoadNet/Images/resetButton.png");
+    myExitButton.Initialize("RoadNet/Images/exitButton.png");
+    myStartButton.Initialize("RoadNet/Images/startButton.png");
+    myQuitButton.Initialize("RoadNet/Images/quitButton.png");
+    backGround.Initialize("RoadNet/Images/background.jpg");
 
     RegisterMouseButton(MouseButton);
     RegisterMouseMove(MouseMove);
@@ -331,34 +375,41 @@ int main(int ac, char **av) {
 
     INIT_FPS_TIME = glfwGetTime();
 
-    GridPrimitive gridPrimitive;
-
-    for (int i = 0; i < 5; i++) {
-        vec2 rndStPoint = GetRandomPoint();
-        vec2 rndEdPoint = GetRandomPoint();
-
-        gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y, (int) rndEdPoint.x);
-    }
-
-    // Reserve Vector Size
     double framesPerSecond = 0;
     while (!glfwWindowShouldClose(w)) {
-        Update();
+        if (application == GAME_STATE) {
 
-        // FPS Calculator
-        framesPerSecond = NUM_OF_FRAMES / (glfwGetTime() - INIT_FPS_TIME);
+            Update();
 
-        infoPanel.AddMessage(FPS_LABEL, to_string(framesPerSecond), WHITE);
+            // FPS Calculator
+            framesPerSecond = NUM_OF_FRAMES / (glfwGetTime() - INIT_FPS_TIME);
 
-        Display(gridPrimitive);
+            Display(gridPrimitive);
 
+            myResetButton.Display();
+            myResetButton.SetScale(vec2(.1f, .1f));
+            myResetButton.SetPosition(vec2(.7f, -.5f));
+
+            myExitButton.Display();
+            myExitButton.SetScale(vec2(.1f, .1f));
+            myExitButton.SetPosition(vec2(.7f, -.75f));
+
+            ToggleDraggedCellsStates(gridPrimitive);
+
+            NUM_OF_FRAMES += 1;
+        }
+        else
+        {
+            backGround.Display();
+            myStartButton.Display();
+            myQuitButton.Display();
+
+            myStartButton.SetScale(vec2(.2f, .2f));
+            myStartButton.SetPosition(vec2(-.5f, -.5f));
+            myQuitButton.SetScale(vec2(.2f, .2f));
+            myQuitButton.SetPosition(vec2(.5f, -.5f));
+        }
         glfwSwapBuffers(w);
-
         glfwPollEvents();
-
-        ToggleDraggedCellsStates(gridPrimitive);
-
-        NUM_OF_FRAMES += 1;
-
     }
 }

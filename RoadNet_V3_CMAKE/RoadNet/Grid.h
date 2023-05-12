@@ -149,6 +149,12 @@ public:
         return *node;
     }
 
+    void GridReset() {
+        this->gridDestObjectives.clear();
+        for (Node& cell : gridNodes) {
+            cell.NodeReset();
+        }
+    }
 };
 
 #endif //ROADREALM_ASTAR_H
