@@ -119,6 +119,33 @@ Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, vector<Node
     return {};
 }
 
+
+void CreatePath(GridPrimitive &gridPrimitive, const Vehicle &vehicleRunner, NodePosition &home, NodePosition &factory,
+                int homeIndex, int factoryIndex, const string &pathHashKey) {
+    if (homeIndex < factoryIndex) {
+        bool validatePath = gridPrimitive.ToggleDestinationLink(home, factory, globalState);
+        if (validatePath) {
+            if ((int) PREV_DRAGGED_CELLS.size() <= currNumRoads) {
+                currNumRoads += 2; // compensate from including the starting and ending nodes.
+                // Hash PathKey
+                size_t hashValue = STRING_HASH_FUN(pathHashKey);
+                RoadRunnerLinker runnerLinker(hashValue, vehicleRunner, true);
+                ROAD_RUNNERS.insert({hashValue, runnerLinker});
+                currNumRoads -= (int) PREV_DRAGGED_CELLS.size();
+            }
+            else
+            {
+                cout << "Not enough road!" << endl;
+            }
+        } else {
+            cout << pathHashKey << endl;
+            size_t hashValue = STRING_HASH_FUN(pathHashKey);
+            ROAD_RUNNERS.erase(hashValue);
+            currNumRoads += (int) PREV_DRAGGED_CELLS.size() - 2;
+        }
+    }
+}
+
 void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
     if (!GLOBAL_MOUSE_DOWN && !PREV_DRAGGED_CELLS.empty()) {
         // RoadRunnerLinker roadRunnerLinker;
@@ -127,7 +154,6 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
         int counter = 0;
         NodePosition home, factory;
         int homeIndex = -1, factoryIndex = -1;
-        int oldNumRoads = currNumRoads;
 
         string pathHashKey;
 
@@ -138,9 +164,7 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
 
             if (getNode.currentState == CLOSED_HOUSE) {
                 cout << "Placement House: " << counter << "\n";
-
                 vehicleRunner.overlayColor = getNode.overlayColor;
-
                 home = getNode.currentPos;
                 homeIndex = counter;
             }
@@ -150,47 +174,22 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
                 factoryIndex = counter;
                 // roadPathLinker.isLinked = true;
             }
-
             counter += 1;
         }
-
-        bool validatePath = gridPrimitive.IsDestinationLinked(home, factory, homeIndex, factoryIndex);
-        if ((int) PREV_DRAGGED_CELLS.size() <= currNumRoads) {
-
-            if (validatePath) {
-                currNumRoads += 2; // compensate from including the starting and ending nodes.
-                // Hash PathKey
-                size_t hashValue = STRING_HASH_FUN(pathHashKey);
-
-                RoadRunnerLinker runnerLinker(hashValue, vehicleRunner, true);
-
-                ROAD_RUNNERS.insert({hashValue, runnerLinker});
-                currNumRoads -= (int) PREV_DRAGGED_CELLS.size();
-            } else {
-                currNumRoads = oldNumRoads;
-            }
-            if (globalState == WIPE_STATE) {
-                cout << pathHashKey << endl;
-                size_t hashValue = STRING_HASH_FUN(pathHashKey);
-                ROAD_RUNNERS.erase(hashValue);
-                currNumRoads += (int) PREV_DRAGGED_CELLS.size() - 2;
-            }
-        } else {
-            cout << "Not enough roads!" << endl;
-        }
-        // Clear
+        CreatePath(gridPrimitive, vehicleRunner, home, factory, homeIndex, factoryIndex, pathHashKey);
         PREV_DRAGGED_CELLS.clear();
         CURRENT_CLICKED_CELL = vec2((NROWS + NCOLS), (NROWS + NCOLS));
     } else {
         if (CURRENT_CLICKED_CELL.x < NCOLS && CURRENT_CLICKED_CELL.y < NROWS
             && CURRENT_CLICKED_CELL.x > -1 && CURRENT_CLICKED_CELL.y > -1) {
-            Node getNode = gridPrimitive.NodeHandler(
+            gridPrimitive.NodeHandler(
                     CombineDigits((int) CURRENT_CLICKED_CELL.y, (int) CURRENT_CLICKED_CELL.x));
             //cout << "Current State: " << getNode.currentState << "\n";
         }
         CURRENT_CLICKED_CELL = vec2((NROWS + NCOLS), (NROWS + NCOLS));
     }
 }
+
 
 bool ClickedCellHandled(int col, int row) {
     for (const vec2 &cell: PREV_DRAGGED_CELLS) {

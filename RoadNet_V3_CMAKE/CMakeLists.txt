@@ -21,7 +21,10 @@ add_executable(RoadRealm glad.c
         GraphicsLinking/lib/Draw.cpp
         GraphicsLinking/lib/IO.cpp
         GraphicsLinking/lib/Letters.cpp
-        GraphicsLinking/lib/Text.cpp)
+        GraphicsLinking/lib/Text.cpp
+        GraphicsLinking/lib/Sprite.cpp)
+
+
 
 find_package(OpenGL REQUIRED)
 

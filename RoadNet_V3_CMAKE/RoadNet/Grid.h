@@ -53,17 +53,32 @@ public:
 
     bool IsDestinationLinked(NodePosition home, NodePosition factory, int homeIndex, int factoryIndex) {
         if (homeIndex < factoryIndex) {
-            for (DestinationObjectives &objectives: gridDestObjectives) {
-                if (!objectives.destLinked && objectives.houseNode.currentPos.AlignmentPosMatches(home)
-                    && objectives.factoryNode.currentPos.AlignmentPosMatches(factory)) {
-                    objectives.destLinked = true;
-
-                    return objectives.destLinked;
-                }
-            }
         }
         return false;
     }
+
+    bool ToggleDestinationLink(NodePosition home, NodePosition factory, GameplayState currentState)
+    {
+        for (DestinationObjectives &objectives: gridDestObjectives) {
+            if (currentState == DRAW_STATE) {
+                if (!objectives.destLinked && objectives.houseNode.currentPos.AlignmentPosMatches(home)
+                    && objectives.factoryNode.currentPos.AlignmentPosMatches(factory)) {
+                    objectives.destLinked = true;
+                    return objectives.destLinked;
+                }
+            }
+            if (currentState == WIPE_STATE){
+                if (objectives.destLinked && objectives.houseNode.currentPos.AlignmentPosMatches(home)
+                    && objectives.factoryNode.currentPos.AlignmentPosMatches(factory)) {
+                    objectives.destLinked = false;
+                    return objectives.destLinked;
+                }
+            }
+
+        }
+        return false;
+    }
+
 
     bool AddNewObjective(int startR, int startC, int endR, int endC) {
         int startNIndex = CombineDigits(startR, startC);
