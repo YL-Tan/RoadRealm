@@ -36,6 +36,10 @@ private:
         return false;
     }
 
+    bool IsSimilarNodePos(NodePosition nodePosComp, NodePosition nodePosComp1) {
+        return nodePosComp.AlignmentPosMatches(nodePosComp1);
+    }
+
 public:
     // N * N grid's nodes/cells
     vector<Node> gridNodes = {};
@@ -51,30 +55,21 @@ public:
         nodesDefaultColor = colorInput;
     }
 
-    bool IsDestinationLinked(NodePosition home, NodePosition factory, int homeIndex, int factoryIndex) {
-        if (homeIndex < factoryIndex) {
-        }
-        return false;
-    }
-
-    bool ToggleDestinationLink(NodePosition home, NodePosition factory, GameplayState currentState)
-    {
+    bool UpdateDestinationLink(NodePosition homePos, NodePosition factoryPos, GameplayState currentState) {
         for (DestinationObjectives &objectives: gridDestObjectives) {
-            if (currentState == DRAW_STATE) {
-                if (!objectives.destLinked && objectives.houseNode.currentPos.AlignmentPosMatches(home)
-                    && objectives.factoryNode.currentPos.AlignmentPosMatches(factory)) {
+            if (IsSimilarNodePos(homePos, objectives.houseNode.currentPos) &&
+                IsSimilarNodePos(factoryPos, objectives.factoryNode.currentPos)) {
+
+                if (currentState == DRAW_STATE && !objectives.destLinked) {
                     objectives.destLinked = true;
                     return objectives.destLinked;
                 }
-            }
-            if (currentState == WIPE_STATE){
-                if (objectives.destLinked && objectives.houseNode.currentPos.AlignmentPosMatches(home)
-                    && objectives.factoryNode.currentPos.AlignmentPosMatches(factory)) {
+                if (currentState == WIPE_STATE && objectives.destLinked) {
                     objectives.destLinked = false;
                     return objectives.destLinked;
                 }
+                return false;
             }
-
         }
         return false;
     }
@@ -166,7 +161,7 @@ public:
 
     void GridReset() {
         this->gridDestObjectives.clear();
-        for (Node& cell : gridNodes) {
+        for (Node &cell: gridNodes) {
             cell.NodeReset();
         }
     }

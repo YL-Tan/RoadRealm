@@ -33,7 +33,7 @@ float FONT_SCALE = 10.0f;
 
 vec2 CURRENT_CLICKED_CELL((NROWS + NCOLS), (NROWS + NCOLS));
 
-set<vec2> PREV_DRAGGED_CELLS;
+vector<vec2> PREV_DRAGGED_CELLS;
 
 InfoPanel infoPanel;
 GameplayState globalState = DRAW_STATE;
@@ -125,7 +125,7 @@ Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, vector<Node
 void CreatePath(GridPrimitive &gridPrimitive, const Vehicle &vehicleRunner, NodePosition &home, NodePosition &factory,
                 int homeIndex, int factoryIndex, const string &pathHashKey) {
     if (homeIndex < factoryIndex) {
-        bool validatePath = gridPrimitive.ToggleDestinationLink(home, factory, globalState);
+        bool validatePath = gridPrimitive.UpdateDestinationLink(home, factory, globalState);
         if (validatePath) {
             if ((int) PREV_DRAGGED_CELLS.size() <= currNumRoads) {
                 currNumRoads += 2; // compensate from including the starting and ending nodes.
@@ -148,12 +148,11 @@ void CreatePath(GridPrimitive &gridPrimitive, const Vehicle &vehicleRunner, Node
 
 void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
     if (!GLOBAL_MOUSE_DOWN && !PREV_DRAGGED_CELLS.empty()) {
-        // RoadRunnerLinker roadRunnerLinker;
-        Vehicle vehicleRunner(-.2f, .4f);
 
-        int counter = 0;
-        NodePosition home, factory;
-        int homeIndex = -1, factoryIndex = -1;
+        Vehicle vehicleRunner(-.2f, .4f);
+        NodePosition homePos, factoryPos;
+
+        int counter = 0, homeIndex = -1, factoryIndex = -1;
 
         string pathHashKey;
 
@@ -163,20 +162,17 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
                                            pathHashKey);
 
             if (getNode.currentState == CLOSED_HOUSE) {
-                cout << "Placement House: " << counter << "\n";
                 vehicleRunner.overlayColor = getNode.overlayColor;
-                home = getNode.currentPos;
+                homePos = getNode.currentPos;
                 homeIndex = counter;
             }
             if (getNode.currentState == CLOSED_FACTORY) {
-                cout << "Placement Factory: " << counter << "\n";
-                factory = getNode.currentPos;
+                factoryPos = getNode.currentPos;
                 factoryIndex = counter;
-                // roadPathLinker.isLinked = true;
             }
             counter += 1;
         }
-        CreatePath(gridPrimitive, vehicleRunner, home, factory, homeIndex, factoryIndex, pathHashKey);
+        CreatePath(gridPrimitive, vehicleRunner, homePos, factoryPos, homeIndex, factoryIndex, pathHashKey);
         PREV_DRAGGED_CELLS.clear();
         CURRENT_CLICKED_CELL = vec2((NROWS + NCOLS), (NROWS + NCOLS));
     } else {
@@ -207,7 +203,7 @@ bool AccumulateDraggedCell(float xMouse, float yMouse) {
 
         CURRENT_CLICKED_CELL = vec2(col, row);
 
-        PREV_DRAGGED_CELLS.insert(CURRENT_CLICKED_CELL);
+        PREV_DRAGGED_CELLS.push_back(CURRENT_CLICKED_CELL);
 
         return true;
     }
@@ -219,7 +215,7 @@ bool AccumulateDraggedCell(int col, int row) {
 
         CURRENT_CLICKED_CELL = vec2(col, row);
 
-        PREV_DRAGGED_CELLS.insert(CURRENT_CLICKED_CELL);
+        PREV_DRAGGED_CELLS.push_back(CURRENT_CLICKED_CELL);
 
         return true;
     }
