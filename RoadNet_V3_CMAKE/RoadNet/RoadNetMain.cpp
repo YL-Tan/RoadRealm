@@ -121,28 +121,22 @@ Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, vector<Node
     return {};
 }
 
+void ToggleLinkedPath(const Vehicle &vehicleRunner, const string &pathHashKey) {
+    if (globalState == DRAW_STATE) {
+        currNumRoads += 2;
 
-void CreatePath(GridPrimitive &gridPrimitive, const Vehicle &vehicleRunner, NodePosition &home, NodePosition &factory,
-                int homeIndex, int factoryIndex, const string &pathHashKey) {
-    if (homeIndex < factoryIndex) {
-        bool validatePath = gridPrimitive.UpdateDestinationLink(home, factory, globalState);
-        if (validatePath) {
-            if ((int) PREV_DRAGGED_CELLS.size() <= currNumRoads) {
-                currNumRoads += 2; // compensate from including the starting and ending nodes.
-                // Hash PathKey
-                size_t hashValue = STRING_HASH_FUN(pathHashKey);
-                RoadRunnerLinker runnerLinker(hashValue, vehicleRunner, true);
-                ROAD_RUNNERS.insert({hashValue, runnerLinker});
-                currNumRoads -= (int) PREV_DRAGGED_CELLS.size();
-            } else {
-                cout << "Not enough road!" << endl;
-            }
-        } else {
-            cout << pathHashKey << endl;
-            size_t hashValue = STRING_HASH_FUN(pathHashKey);
-            ROAD_RUNNERS.erase(hashValue);
-            currNumRoads += (int) PREV_DRAGGED_CELLS.size() - 2;
-        }
+        size_t hashValue = STRING_HASH_FUN(pathHashKey);
+        RoadRunnerLinker runnerLinker(hashValue, vehicleRunner, true);
+        ROAD_RUNNERS.insert({hashValue, runnerLinker});
+
+        currNumRoads -= (int) PREV_DRAGGED_CELLS.size();
+    }
+
+    if (globalState == WIPE_STATE) {
+        cout << pathHashKey << endl;
+        size_t hashValue = STRING_HASH_FUN(pathHashKey);
+        ROAD_RUNNERS.erase(hashValue);
+        currNumRoads += (int) PREV_DRAGGED_CELLS.size() - 2;
     }
 }
 
@@ -172,7 +166,17 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
             }
             counter += 1;
         }
-        CreatePath(gridPrimitive, vehicleRunner, homePos, factoryPos, homeIndex, factoryIndex, pathHashKey);
+
+        // Home --TO--> Factory Order
+        if (homeIndex < factoryIndex && (int) PREV_DRAGGED_CELLS.size() <= currNumRoads) {
+            bool updateLinkStatus = gridPrimitive.UpdateDestinationLink(homePos, factoryPos, globalState);
+            if (updateLinkStatus) {
+                ToggleLinkedPath(vehicleRunner, pathHashKey);
+            }
+        } else {
+            cout << "Not enough road! Or Invalid Path Selection" << endl;
+        }
+
         PREV_DRAGGED_CELLS.clear();
         CURRENT_CLICKED_CELL = vec2((NROWS + NCOLS), (NROWS + NCOLS));
     } else {

@@ -54,7 +54,14 @@ public:
         FormulateGrid();
         nodesDefaultColor = colorInput;
     }
-
+    /**
+     * UpdateDestinationLink()
+     *
+     * @param homePos NodePosition Structure
+     * @param factoryPos NodePosition Structure
+     * @param currentState Gameplay State
+     * @return Boolean Condition For Linking Update Performed.
+     */
     bool UpdateDestinationLink(NodePosition homePos, NodePosition factoryPos, GameplayState currentState) {
         for (DestinationObjectives &objectives: gridDestObjectives) {
             if (IsSimilarNodePos(homePos, objectives.houseNode.currentPos) &&
@@ -62,18 +69,17 @@ public:
 
                 if (currentState == DRAW_STATE && !objectives.destLinked) {
                     objectives.destLinked = true;
-                    return objectives.destLinked;
+                    return true;
                 }
                 if (currentState == WIPE_STATE && objectives.destLinked) {
                     objectives.destLinked = false;
-                    return objectives.destLinked;
+                    return true;
                 }
-                return false;
             }
         }
+        // Empty Objective, No Updates Performed.
         return false;
     }
-
 
     bool AddNewObjective(int startR, int startC, int endR, int endC) {
         int startNIndex = CombineDigits(startR, startC);
