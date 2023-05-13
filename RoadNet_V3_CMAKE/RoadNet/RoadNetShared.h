@@ -19,16 +19,6 @@ using namespace std;
 #define W_EDGE_BUFFER 100
 #define INFO_MSG_SIZE 9
 
-int APP_WIDTH = 1000, APP_HEIGHT = 800, X_POS = 20, Y_POS = 20,
-        GLOBAL_W = APP_WIDTH - W_EDGE_BUFFER, GLOBAL_H = APP_HEIGHT - H_EDGE_BUFFER;
-
-int GRID_W = GLOBAL_W * 0.75, DISP_W = GLOBAL_W - (GLOBAL_W * 0.22); // +  150;
-float DX = (float) GRID_W / NCOLS, DY = (float) GLOBAL_H / NROWS;
-
-const vec3 WHITE(1, 1, 1), BLACK(0, 0, 0), GREY(.5, .5, .5), RED(1, 0, 0),
-        GREEN(0, 1, 0), BLUE(0, 0, 1), YELLOW(1, 1, 0),
-        ORANGE(1, .55f, 0), PURPLE(.8f, .1f, .5f), CYAN(0, 1, 1), PALE_GREY(.8, .8, .8);
-
 enum NodeStates {
     OPEN, CLOSED_ROAD, CLOSED_HOUSE, CLOSED_FACTORY, POTENTIAL_ROAD
 };
@@ -52,6 +42,16 @@ enum InfoLabelsIndex {
     ERROR_MSG_LABEL = 7,
     LOGS_MSG_LABEL = 8
 };
+
+int APP_WIDTH = 1000, APP_HEIGHT = 800, X_POS = 20, Y_POS = 20,
+        GLOBAL_W = APP_WIDTH - W_EDGE_BUFFER, GLOBAL_H = APP_HEIGHT - H_EDGE_BUFFER;
+
+int GRID_W = GLOBAL_W * 0.75, DISP_W = GLOBAL_W - (GLOBAL_W * 0.22); // +  150;
+float DX = (float) GRID_W / NCOLS, DY = (float) GLOBAL_H / NROWS;
+
+const vec3 WHITE(1, 1, 1), BLACK(0, 0, 0), GREY(.5, .5, .5), RED(1, 0, 0),
+        GREEN(0, 1, 0), BLUE(0, 0, 1), YELLOW(1, 1, 0),
+        ORANGE(1, .55f, 0), PURPLE(.8f, .1f, .5f), CYAN(0, 1, 1), PALE_GREY(.8, .8, .8);
 
 struct InfoPanel {
 
@@ -295,14 +295,14 @@ struct Vehicle {
 };
 
 struct RoadRunnerLinker {
-    size_t hashedId;
+    string hashedId;
     bool isLinked = false;
 
     // vec3 roadColor;
     Vehicle vehicleRunner;
     // vector<NodePosition> roadPath;
 
-    RoadRunnerLinker(size_t hashedVal, const Vehicle &runner, bool linkStatus) {
+    RoadRunnerLinker(string hashedVal, const Vehicle &runner, bool linkStatus) {
         this->hashedId = hashedVal;
         this->vehicleRunner = runner;
         this->isLinked = linkStatus;

@@ -28,7 +28,7 @@ double INIT_FPS_TIME = 0;
 bool GLOBAL_MOUSE_DOWN = false, GLOBAL_PAUSE = false, GLOBAL_DRAW_BORDERS = false, ACTIVE_GAME_RESET = false;
 // In Seconds
 double REPLENISH_INTERVAL = 10.0, FRAMES_PER_SECONDS = 0;
-int REPLENISH_ROADS_NUM = 10;
+int REPLENISH_ROADS_NUM = 20;
 float FONT_SCALE = 10.0f;
 
 vec2 CURRENT_CLICKED_CELL((NROWS + NCOLS), (NROWS + NCOLS));
@@ -36,7 +36,6 @@ vec2 CURRENT_CLICKED_CELL((NROWS + NCOLS), (NROWS + NCOLS));
 vector<vec2> PREV_DRAGGED_CELLS;
 
 InfoPanel infoPanel;
-GameplayState globalState = DRAW_STATE;
 ApplicationStates application = STARTING_MENU;
 Sprite myResetButton, myExitButton, myStartButton, myQuitButton, backGround;
 
@@ -44,13 +43,15 @@ GLFWwindow *w = InitGLFW(100, 100, APP_WIDTH, APP_HEIGHT, "RoadRealm");
 
 time_t oldtime = clock();
 chrono::duration<double> gameClock;
-int currNumRoads = 10;
+int currNumRoads = 20;
 double lastReplenishTime = 0.0;
 string status = "Draw";
 
-map<size_t, RoadRunnerLinker> ROAD_RUNNERS;
+GameplayState globalState = DRAW_STATE;
 
 hash<string> STRING_HASH_FUN;
+
+map<string, RoadRunnerLinker> ROAD_RUNNERS;
 
 string formatDuration(const chrono::duration<double> &duration) {
     int totalSeconds = static_cast<int>(duration.count());
@@ -121,23 +122,64 @@ Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, vector<Node
     return {};
 }
 
-void ToggleLinkedPath(const Vehicle &vehicleRunner, const string &pathHashKey) {
+void LinkedPathFormulation(GridPrimitive &gridPrimitive, NodePosition homePos, NodePosition factoryPos,
+                           const Vehicle &vehicleRunner, const string &pathHashKey) {
+
+    bool updateLinkStatus = false;
+
     if (globalState == DRAW_STATE) {
-        currNumRoads += 2;
+        updateLinkStatus = gridPrimitive.UpdateDestinationLink(homePos, factoryPos, true);
+        if (updateLinkStatus) {
+            currNumRoads += 2;
 
-        size_t hashValue = STRING_HASH_FUN(pathHashKey);
-        RoadRunnerLinker runnerLinker(hashValue, vehicleRunner, true);
-        ROAD_RUNNERS.insert({hashValue, runnerLinker});
-
-        currNumRoads -= (int) PREV_DRAGGED_CELLS.size();
+            RoadRunnerLinker runnerLinker(pathHashKey, vehicleRunner, true);
+            ROAD_RUNNERS.insert({pathHashKey, runnerLinker});
+            currNumRoads -= (int) PREV_DRAGGED_CELLS.size();
+        }
     }
 
     if (globalState == WIPE_STATE) {
-        cout << pathHashKey << endl;
-        size_t hashValue = STRING_HASH_FUN(pathHashKey);
-        ROAD_RUNNERS.erase(hashValue);
-        currNumRoads += (int) PREV_DRAGGED_CELLS.size() - 2;
+        updateLinkStatus = gridPrimitive.UpdateDestinationLink(homePos, factoryPos, false);
+        if (updateLinkStatus) {
+            cout << pathHashKey << endl;
+
+            ROAD_RUNNERS.erase(pathHashKey);
+            currNumRoads += (int) PREV_DRAGGED_CELLS.size() - 2;
+        }
     }
+}
+
+bool IsValidMouseDrag() {
+    vec2 curCell, prevCell;
+
+    int i = 0;
+    float rowDiff = 0, colDiff = 0;
+
+    bool isNotDiagonal = false, isSameAxis = false;
+
+    while (i < PREV_DRAGGED_CELLS.size() - 1) {
+        prevCell = PREV_DRAGGED_CELLS.at(i);
+        curCell = PREV_DRAGGED_CELLS.at((i + 1));
+
+        isNotDiagonal = (curCell.x == prevCell.x) || (curCell.y == prevCell.y);
+        rowDiff = abs(curCell.y - prevCell.y);
+        colDiff = abs(curCell.x - prevCell.x);
+
+        if (!isNotDiagonal) {
+            isSameAxis = false;
+            break;
+        }
+
+        if (rowDiff > 1 || colDiff > 1) {
+            isSameAxis = false;
+            break;
+        }
+
+        isSameAxis = true;
+        i += 1;
+    }
+
+    return isSameAxis;
 }
 
 void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
@@ -150,32 +192,38 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
 
         string pathHashKey;
 
-        for (const vec2 &cell: PREV_DRAGGED_CELLS) {
+        bool isValidDrag = IsValidMouseDrag();
 
-            Node getNode = ToggleNodeState((int) cell.x, (int) cell.y, gridPrimitive, vehicleRunner.runnerPath,
-                                           pathHashKey);
+        if (isValidDrag) {
 
-            if (getNode.currentState == CLOSED_HOUSE) {
-                vehicleRunner.overlayColor = getNode.overlayColor;
-                homePos = getNode.currentPos;
-                homeIndex = counter;
+            for (const vec2 &cell: PREV_DRAGGED_CELLS) {
+
+                Node getNode = ToggleNodeState((int) cell.x, (int) cell.y, gridPrimitive, vehicleRunner.runnerPath,
+                                               pathHashKey);
+
+                if (getNode.currentState == CLOSED_HOUSE) {
+                    vehicleRunner.overlayColor = getNode.overlayColor;
+                    homePos = getNode.currentPos;
+                    homeIndex = counter;
+                }
+                if (getNode.currentState == CLOSED_FACTORY) {
+                    factoryPos = getNode.currentPos;
+                    factoryIndex = counter;
+                }
+                counter += 1;
             }
-            if (getNode.currentState == CLOSED_FACTORY) {
-                factoryPos = getNode.currentPos;
-                factoryIndex = counter;
+
+            // Home --TO--> Factory Order
+            if (homeIndex < factoryIndex && (int) PREV_DRAGGED_CELLS.size() <= currNumRoads) {
+                LinkedPathFormulation(gridPrimitive, homePos, factoryPos, vehicleRunner, pathHashKey);
+
+            } else {
+                cout << "Not enough road! Or Invalid Path Selection" << endl;
             }
-            counter += 1;
+
         }
 
-        // Home --TO--> Factory Order
-        if (homeIndex < factoryIndex && (int) PREV_DRAGGED_CELLS.size() <= currNumRoads) {
-            bool updateLinkStatus = gridPrimitive.UpdateDestinationLink(homePos, factoryPos, globalState);
-            if (updateLinkStatus) {
-                ToggleLinkedPath(vehicleRunner, pathHashKey);
-            }
-        } else {
-            cout << "Not enough road! Or Invalid Path Selection" << endl;
-        }
+        cout << "Dragged Status:\t" << isValidDrag << "\n";
 
         PREV_DRAGGED_CELLS.clear();
         CURRENT_CLICKED_CELL = vec2((NROWS + NCOLS), (NROWS + NCOLS));

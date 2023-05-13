@@ -54,30 +54,17 @@ public:
         FormulateGrid();
         nodesDefaultColor = colorInput;
     }
-    /**
-     * UpdateDestinationLink()
-     *
-     * @param homePos NodePosition Structure
-     * @param factoryPos NodePosition Structure
-     * @param currentState Gameplay State
-     * @return Boolean Condition For Linking Update Performed.
-     */
-    bool UpdateDestinationLink(NodePosition homePos, NodePosition factoryPos, GameplayState currentState) {
+
+    bool UpdateDestinationLink(NodePosition homePos, NodePosition factoryPos, bool isLinked) {
         for (DestinationObjectives &objectives: gridDestObjectives) {
             if (IsSimilarNodePos(homePos, objectives.houseNode.currentPos) &&
-                IsSimilarNodePos(factoryPos, objectives.factoryNode.currentPos)) {
-
-                if (currentState == DRAW_STATE && !objectives.destLinked) {
-                    objectives.destLinked = true;
-                    return true;
-                }
-                if (currentState == WIPE_STATE && objectives.destLinked) {
-                    objectives.destLinked = false;
-                    return true;
-                }
+                IsSimilarNodePos(factoryPos, objectives.factoryNode.currentPos) && objectives.destLinked != isLinked) {
+                // Update Performed.
+                objectives.destLinked = isLinked;
+                return true;
             }
         }
-        // Empty Objective, No Updates Performed.
+        // No Updates Performed. (Combined: No record of home-to-factory being an objective destination)
         return false;
     }
 
