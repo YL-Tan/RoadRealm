@@ -53,6 +53,8 @@ const vec3 WHITE(1, 1, 1), BLACK(0, 0, 0), GREY(.5, .5, .5), RED(1, 0, 0),
         GREEN(0, 1, 0), BLUE(0, 0, 1), YELLOW(1, 1, 0),
         ORANGE(1, .55f, 0), PURPLE(.8f, .1f, .5f), CYAN(0, 1, 1), PALE_GREY(.8, .8, .8);
 
+GameplayState globalState = DRAW_STATE;
+
 struct InfoPanel {
 
     struct Message {

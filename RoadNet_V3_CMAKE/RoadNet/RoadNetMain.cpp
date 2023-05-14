@@ -47,8 +47,6 @@ int currNumRoads = 20;
 double lastReplenishTime = 0.0;
 string status = "Draw";
 
-GameplayState globalState = DRAW_STATE;
-
 hash<string> STRING_HASH_FUN;
 
 map<string, RoadRunnerLinker> ROAD_RUNNERS;
@@ -121,13 +119,13 @@ Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, vector<Node
     return {};
 }
 
-void LinkedPathFormulation(GridPrimitive &gridPrimitive, NodePosition homePos, NodePosition factoryPos,
+bool LinkedPathFormulation(GridPrimitive &gridPrimitive, NodePosition homePos, NodePosition factoryPos,
                            const Vehicle &vehicleRunner, const string &pathHashKey) {
-
     bool updateLinkStatus = false;
 
     if (globalState == DRAW_STATE) {
         updateLinkStatus = gridPrimitive.UpdateDestinationLink(homePos, factoryPos, true);
+
         if (updateLinkStatus) {
             currNumRoads += 2;
 
@@ -138,14 +136,17 @@ void LinkedPathFormulation(GridPrimitive &gridPrimitive, NodePosition homePos, N
     }
 
     if (globalState == WIPE_STATE) {
-        updateLinkStatus = gridPrimitive.UpdateDestinationLink(homePos, factoryPos, false);
-        if (updateLinkStatus) {
-            cout << pathHashKey << endl;
-
-            ROAD_RUNNERS.erase(pathHashKey);
-            currNumRoads += (int) PREV_DRAGGED_CELLS.size() - 2;
+        auto findRunner = ROAD_RUNNERS.find(pathHashKey);
+        if (findRunner != ROAD_RUNNERS.end()) {
+            updateLinkStatus = gridPrimitive.UpdateDestinationLink(homePos, factoryPos, false);
+            if (updateLinkStatus) {
+                cout << pathHashKey << endl;
+                ROAD_RUNNERS.erase(findRunner);
+                currNumRoads += (int) PREV_DRAGGED_CELLS.size() - 2;
+            }
         }
     }
+    return updateLinkStatus;
 }
 
 bool AreValidDraggedCells(GridPrimitive &gridPrimitive) {
@@ -153,24 +154,16 @@ bool AreValidDraggedCells(GridPrimitive &gridPrimitive) {
 
     int i = 0;
     float rowDiff = 0, colDiff = 0;
-    bool isSameAxis = false;
+    bool partOfCross = false, isSameAxis = false;
 
     // Validate Cell
     vec2 ptlHouse = PREV_DRAGGED_CELLS.at(i);
     vec2 ptlFactory = PREV_DRAGGED_CELLS.at(PREV_DRAGGED_CELLS.size() - 1);
 
-    int ptlHouseIndex = CombineDigits((int)ptlHouse.y, (int)ptlHouse.x),
-    ptFactoryIndex = CombineDigits((int)ptlFactory.y, (int)ptlFactory.x);
+    Node houseNode = gridPrimitive.GetNode(ptlHouse);
+    Node factoryNode = gridPrimitive.GetNode(ptlFactory);
 
-    if(ptFactoryIndex >= gridPrimitive.gridNodes.size() || ptlHouseIndex >= gridPrimitive.gridNodes.size())
-    {
-        return isSameAxis;
-    }
-    Node houseNode = gridPrimitive.gridNodes.at(ptlHouseIndex);
-    Node factoryNode = gridPrimitive.gridNodes.at(ptFactoryIndex);
-
-    if(houseNode.currentState != CLOSED_HOUSE || factoryNode.currentState != CLOSED_FACTORY)
-    {
+    if (houseNode.currentState != CLOSED_HOUSE || factoryNode.currentState != CLOSED_FACTORY) {
         return isSameAxis;
     }
 
@@ -181,7 +174,9 @@ bool AreValidDraggedCells(GridPrimitive &gridPrimitive) {
         rowDiff = abs(curCell.y - prevCell.y);
         colDiff = abs(curCell.x - prevCell.x);
 
-        if (rowDiff > 1 || colDiff > 1) {
+        partOfCross = (curCell.x == prevCell.x) || (curCell.y == prevCell.y);
+
+        if (rowDiff > 1 || colDiff > 1 || !partOfCross) {
             isSameAxis = false;
             break;
         }
@@ -223,6 +218,7 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
                 }
                 counter += 1;
             }
+            cout << "Route: " << pathHashKey << "\n";
 
             // Home --TO--> Factory Order
             if (homeIndex < factoryIndex && (int) PREV_DRAGGED_CELLS.size() <= currNumRoads) {

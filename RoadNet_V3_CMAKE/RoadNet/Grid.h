@@ -9,7 +9,6 @@
 struct DestinationObjectives {
     Node houseNode;
     Node factoryNode;
-
     bool destLinked = false;
 };
 
@@ -150,6 +149,14 @@ public:
             return *node;
         }
         return *node;
+    }
+
+    Node GetNode(const vec2 &gridAxisPoint) {
+        int nodeIndex = CombineDigits((int) gridAxisPoint.y, (int) gridAxisPoint.x);
+        if (nodeIndex < gridNodes.size()) {
+            return gridNodes.at(nodeIndex);
+        }
+        return {};
     }
 
     void GridReset() {
