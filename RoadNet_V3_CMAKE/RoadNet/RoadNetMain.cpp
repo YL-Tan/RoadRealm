@@ -102,10 +102,9 @@ void Update() {
 
 Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, vector<NodePosition> &path, string &pathKey) {
     if (col < NCOLS && row < NROWS && col > -1 && row > -1) {
-        // Get Potential Index, Will Explain On Tuesday,
-        // [0,0] bottom Left
+
         int potentialIndex = CombineDigits(row, col);
-        // cout << col << "\t" << row << "\t" << potentialIndex << "\n";
+
         Node node = gridPrimitive.NodeHandler(potentialIndex);
 
         path.push_back(node.currentPos);
@@ -149,26 +148,38 @@ void LinkedPathFormulation(GridPrimitive &gridPrimitive, NodePosition homePos, N
     }
 }
 
-bool IsValidMouseDrag() {
+bool AreValidDraggedCells(GridPrimitive &gridPrimitive) {
     vec2 curCell, prevCell;
 
     int i = 0;
     float rowDiff = 0, colDiff = 0;
+    bool isSameAxis = false;
 
-    bool isNotDiagonal = false, isSameAxis = false;
+    // Validate Cell
+    vec2 ptlHouse = PREV_DRAGGED_CELLS.at(i);
+    vec2 ptlFactory = PREV_DRAGGED_CELLS.at(PREV_DRAGGED_CELLS.size() - 1);
+
+    int ptlHouseIndex = CombineDigits((int)ptlHouse.y, (int)ptlHouse.x),
+    ptFactoryIndex = CombineDigits((int)ptlFactory.y, (int)ptlFactory.x);
+
+    if(ptFactoryIndex >= gridPrimitive.gridNodes.size() || ptlHouseIndex >= gridPrimitive.gridNodes.size())
+    {
+        return isSameAxis;
+    }
+    Node houseNode = gridPrimitive.gridNodes.at(ptlHouseIndex);
+    Node factoryNode = gridPrimitive.gridNodes.at(ptFactoryIndex);
+
+    if(houseNode.currentState != CLOSED_HOUSE || factoryNode.currentState != CLOSED_FACTORY)
+    {
+        return isSameAxis;
+    }
 
     while (i < PREV_DRAGGED_CELLS.size() - 1) {
         prevCell = PREV_DRAGGED_CELLS.at(i);
         curCell = PREV_DRAGGED_CELLS.at((i + 1));
 
-        isNotDiagonal = (curCell.x == prevCell.x) || (curCell.y == prevCell.y);
         rowDiff = abs(curCell.y - prevCell.y);
         colDiff = abs(curCell.x - prevCell.x);
-
-        if (!isNotDiagonal) {
-            isSameAxis = false;
-            break;
-        }
 
         if (rowDiff > 1 || colDiff > 1) {
             isSameAxis = false;
@@ -192,7 +203,7 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
 
         string pathHashKey;
 
-        bool isValidDrag = IsValidMouseDrag();
+        bool isValidDrag = AreValidDraggedCells(gridPrimitive);
 
         if (isValidDrag) {
 
