@@ -464,14 +464,13 @@ int main(int ac, char **av) {
 
     while (!glfwWindowShouldClose(w)) {
 
-        Update();
+
 
         FRAMES_PER_SECONDS = NUM_OF_FRAMES / (glfwGetTime() - INIT_FPS_TIME);
 
         Display(gridPrimitive);
 
-        glfwSwapBuffers(w);
-        glfwPollEvents();
+
 
         NUM_OF_FRAMES += 1;
 
