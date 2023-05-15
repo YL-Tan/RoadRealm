@@ -463,6 +463,7 @@ int main(int ac, char **av) {
     GridPrimitive gridPrimitive;
 
     while (!glfwWindowShouldClose(w)) {
+        Update();
 
 
 
