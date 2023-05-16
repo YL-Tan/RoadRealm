@@ -336,7 +336,7 @@ void ResetGameState(GridPrimitive &gridPrimitive) {
 
         for (int i = 0; i < 5; i++) {
             vec2 rndStPoint = GetRandomPoint();
-            vec2 rndEdPoint = GenerateFactoryPoint(FindNeighbors(rndStPoint, 4));
+            vec2 rndEdPoint = GenerateFactoryPoint(FindNeighbors(rndStPoint, 4)):;
 
             gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
                                           (int) rndEdPoint.x);
