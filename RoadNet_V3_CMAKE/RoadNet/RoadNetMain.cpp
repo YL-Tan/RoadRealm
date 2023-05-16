@@ -110,11 +110,11 @@ Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, vector<Node
         pathKey += to_string(node.currentPos.row) + to_string(node.currentPos.col);
 
         infoPanel.AddMessage(MOUSE_CLICK_LABEL, "Mouse Click: X" + to_string(col) + " Y " + to_string(row), WHITE);
-        infoPanel.AddMessage(ERROR_MSG_LABEL, "Success", WHITE);
+        infoPanel.AddMessage(ERROR_MSG_LABEL_1, "Success", GREEN);
 
         return node;
     } else {
-        infoPanel.AddMessage(ERROR_MSG_LABEL, "Out Of Grid Mouse Click", WHITE);
+        infoPanel.AddMessage(ERROR_MSG_LABEL_2, "Out Of Grid Mouse Click", RED);
     }
     return {};
 }
@@ -149,22 +149,22 @@ bool LinkedPathFormulation(GridPrimitive &gridPrimitive, NodePosition homePos, N
     return updateLinkStatus;
 }
 
-bool AreValidDraggedCells(GridPrimitive &gridPrimitive) {
+bool AreValidDraggedCells(GridPrimitive &gridPrimitive, Node &houseNode, Node &factoryNode) {
     vec2 curCell, prevCell;
 
     int i = 0;
     float rowDiff = 0, colDiff = 0;
-    bool partOfCross = false, isValidDrag = false;
+    bool partOfCross = false;
 
     // Validate Cell
     vec2 ptlHouse = PREV_DRAGGED_CELLS.at(i);
     vec2 ptlFactory = PREV_DRAGGED_CELLS.at(PREV_DRAGGED_CELLS.size() - 1);
 
-    Node houseNode = gridPrimitive.GetNode(ptlHouse);
-    Node factoryNode = gridPrimitive.GetNode(ptlFactory);
+    houseNode = gridPrimitive.GetNode(ptlHouse);
+    factoryNode = gridPrimitive.GetNode(ptlFactory);
 
     if (houseNode.currentState != CLOSED_HOUSE || factoryNode.currentState != CLOSED_FACTORY) {
-        return isValidDrag;
+        return false;
     }
 
     while (i < PREV_DRAGGED_CELLS.size() - 1) {
@@ -177,26 +177,28 @@ bool AreValidDraggedCells(GridPrimitive &gridPrimitive) {
         partOfCross = (curCell.x == prevCell.x) || (curCell.y == prevCell.y);
 
         if (rowDiff > 1 || colDiff > 1 || !partOfCross) {
-            isValidDrag = false;
-            break;
+            return false;
+        }
+        // Check if Closed Node
+        if (i > 0 && gridPrimitive.IsAClosedNodeState(prevCell)) {
+            return false;
         }
 
-        isValidDrag = true;
         i += 1;
     }
-
-    return isValidDrag;
+    return true;
 }
 
 void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
     if (!GLOBAL_MOUSE_DOWN && !PREV_DRAGGED_CELLS.empty()) {
 
         Vehicle vehicleRunner(-.2f, .4f);
-        NodePosition homePos, factoryPos;
+        // NodePosition homePos, factoryPos;
 
+        Node houseNode, factoryNode;
         string pathHashKey;
 
-        bool isValidDrag = AreValidDraggedCells(gridPrimitive);
+        bool isValidDrag = AreValidDraggedCells(gridPrimitive, houseNode, factoryNode);
 
         if (isValidDrag) {
 
@@ -204,25 +206,31 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
 
                 Node getNode = ToggleNodeState((int) cell.x, (int) cell.y, gridPrimitive, vehicleRunner.runnerPath,
                                                pathHashKey);
-
-                if (getNode.currentState == CLOSED_HOUSE) {
-                    vehicleRunner.overlayColor = getNode.overlayColor;
-                    homePos = getNode.currentPos;
+                if (getNode.currentState != CLOSED_HOUSE && getNode.currentState != CLOSED_FACTORY) {
+                    vehicleRunner.overlayColor = houseNode.overlayColor;
                 }
-                if (getNode.currentState == CLOSED_FACTORY) {
-                    factoryPos = getNode.currentPos;
-                }
+                /* if (getNode.currentState == CLOSED_HOUSE) {
+                     vehicleRunner.overlayColor = getNode.overlayColor;
+                     homePos = getNode.currentPos;
+                 }
+                 if (getNode.currentState == CLOSED_FACTORY) {
+                     factoryPos = getNode.currentPos;
+                 }*/
             }
             cout << "Route: " << pathHashKey << "\n";
 
             // Home --TO--> Factory Order
             if ((int) PREV_DRAGGED_CELLS.size() <= currNumRoads) {
-                LinkedPathFormulation(gridPrimitive, homePos, factoryPos, vehicleRunner, pathHashKey);
-
+                LinkedPathFormulation(gridPrimitive, houseNode.currentPos, factoryNode.currentPos, vehicleRunner,
+                                      pathHashKey);
+                infoPanel.AddMessage(ERROR_MSG_LABEL_1, "Valid Linking", GREEN);
             } else {
-                cout << "Not enough road! Or Invalid Path Selection" << endl;
+                // cout << "Not enough road! Or Invalid Path Selection" << endl;
+                infoPanel.AddMessage(ERROR_MSG_LABEL_2, "Not enough road!", RED);
             }
         }
+
+        infoPanel.AddMessage(ERROR_MSG_LABEL_2, "Invalid Path Selection", RED);
 
         cout << "Dragged Status:\t" << isValidDrag << "\n";
 
@@ -233,7 +241,6 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
             && CURRENT_CLICKED_CELL.x > -1 && CURRENT_CLICKED_CELL.y > -1) {
             gridPrimitive.NodeHandler(
                     CombineDigits((int) CURRENT_CLICKED_CELL.y, (int) CURRENT_CLICKED_CELL.x));
-            //cout << "Current State: " << getNode.currentState << "\n";
         }
         CURRENT_CLICKED_CELL = vec2((NROWS + NCOLS), (NROWS + NCOLS));
     }
@@ -285,8 +292,7 @@ void ResetGameState(GridPrimitive &gridPrimitive) {
         lastReplenishTime = 0.0;
         status = "Draw";
 
-        infoPanel.AddMessage(ERROR_MSG_LABEL, "", WHITE);
-        infoPanel.AddMessage(LOGS_MSG_LABEL, "Reset", WHITE);
+        infoPanel.AddMessage(LOGS_MSG_LABEL_2, "Reset", WHITE);
 
         gameClock = chrono::duration<double>(0);
 
@@ -315,7 +321,7 @@ void MouseButton(float xmouse, float ymouse, bool left, bool down) {
         } else if (application == GAME_STATE && myExitButton.Hit(xmouse, ymouse)) {
             application = STARTING_MENU;
             ACTIVE_GAME_RESET = true;
-            infoPanel.AddMessage(LOGS_MSG_LABEL, "", WHITE);
+            infoPanel.AddMessage(LOGS_MSG_LABEL_2, "", YELLOW);
         } else if (application == STARTING_MENU && myStartButton.Hit(xmouse, ymouse)) {
             application = GAME_STATE;
         } else if (application == STARTING_MENU && myQuitButton.Hit(xmouse, ymouse)) {
@@ -395,7 +401,7 @@ void Display(GridPrimitive gridPrimitive) {
             string runnerDrawLog;
             runnerLinkers.second.vehicleRunner.Draw(runnerDrawLog);
 
-            infoPanel.AddMessage(LOGS_MSG_LABEL, runnerDrawLog, WHITE);
+            infoPanel.AddMessage(LOGS_MSG_LABEL_1, runnerDrawLog, YELLOW);
         }
         if (GLOBAL_DRAW_BORDERS) {
             DrawBorders();

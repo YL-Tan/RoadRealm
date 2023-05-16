@@ -159,6 +159,16 @@ public:
         return {};
     }
 
+    bool IsAClosedNodeState(vec2 &gridAxisPoint)
+    {
+        Node node = GetNode(gridAxisPoint);
+        if(node.currentState == CLOSED_FACTORY || node.currentState == CLOSED_HOUSE )
+        {
+            return true;
+        }
+        return false;
+    }
+
     void GridReset() {
         this->gridDestObjectives.clear();
         for (Node &cell: gridNodes) {
