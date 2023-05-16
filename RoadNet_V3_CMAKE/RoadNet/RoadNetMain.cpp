@@ -316,39 +316,6 @@ bool AccumulateDraggedCell(int col, int row) {
     return false;
 }
 
-bool IsInGrid(int row, int col)
-{
-    if ((row >= NROWS || row < 0) || ((col >= NCOLS) || (col < 0)))
-    {
-        return false;
-    }
-    return true;
-}
-
-vector<vec2> FindNeighbors(vec2 startingPoint, int dist)
-{
-    vector<vec2> potentialLocations;
-    for (int i = (int) startingPoint.y - dist; i <= (int) startingPoint.y + dist; i++)
-    {
-        for (int j = (int) startingPoint.x - dist; j <= (int) startingPoint.x + dist; j++)
-        {
-            if (!(i == (int) startingPoint. y && j == (int) startingPoint.x))
-            {
-                if (IsInGrid(i, j))
-                    potentialLocations.emplace_back(j,i);
-            }
-        }
-    }
-    return potentialLocations;
-}
-
-vec2 GenerateFactoryPoint(vector<vec2> neighbors)
-{
-    srand((unsigned) time(nullptr));
-    int size = neighbors.size();
-    int randInd = rand() % size;
-    return neighbors.at(randInd);
-}
 
 void ResetGameState(GridPrimitive &gridPrimitive) {
     if (ACTIVE_GAME_RESET) {
@@ -370,7 +337,7 @@ void ResetGameState(GridPrimitive &gridPrimitive) {
 
         for (int i = 0; i < 5; i++) {
             vec2 rndStPoint = GetRandomPoint();
-            vec2 rndEdPoint = GenerateFactoryPoint(FindNeighbors(rndStPoint, 4));
+            vec2 rndEdPoint = GetRandomPoint(2, FindNeighbors(rndStPoint, (NCOLS / 2)), true);
 
             gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
                                           (int) rndEdPoint.x);
@@ -513,11 +480,11 @@ void Resize(int width, int height) {
 }
 
 int main(int ac, char **av) {
-    myResetButton.Initialize("RoadNet/Images/resetButton.png");
-    myExitButton.Initialize("RoadNet/Images/exitButton.png");
-    myStartButton.Initialize("RoadNet/Images/startButton.png");
-    myQuitButton.Initialize("RoadNet/Images/quitButton.png");
-    backGround.Initialize("RoadNet/Images/background.jpg");
+    myResetButton.Initialize("../RoadNet/Images/resetButton.png");
+    myExitButton.Initialize("../RoadNet/Images/exitButton.png");
+    myStartButton.Initialize("../RoadNet/Images/startButton.png");
+    myQuitButton.Initialize("../RoadNet/Images/quitButton.png");
+    backGround.Initialize("../RoadNet/Images/background.jpg");
 
     RegisterMouseButton(MouseButton);
     RegisterMouseMove(MouseMove);

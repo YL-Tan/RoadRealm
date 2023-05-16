@@ -149,6 +149,32 @@ void DrawBorders() {
     Line(vec2(5, 5), vec2(GLOBAL_W, 5), 1, WHITE);
 }
 
+bool IsInGrid(int row, int col)
+{
+    if ((row >= NROWS || row < 0) || ((col >= NCOLS) || (col < 0)))
+    {
+        return false;
+    }
+    return true;
+}
+
+vector<vec2> FindNeighbors(vec2 startingPoint, int dist)
+{
+    vector<vec2> potentialLocations;
+    for (int i = (int) startingPoint.y - dist; i <= (int) startingPoint.y + dist; i++)
+    {
+        for (int j = (int) startingPoint.x - dist; j <= (int) startingPoint.x + dist; j++)
+        {
+            if (!(i == (int) startingPoint. y && j == (int) startingPoint.x))
+            {
+                if (IsInGrid(i, j))
+                    potentialLocations.emplace_back(j,i);
+            }
+        }
+    }
+    return potentialLocations;
+}
+
 void GetRandomDistribution(int distribLimit, int numOfRndValues, vector<int> &distribRndPlacement) {
     random_device generator;
     uniform_int_distribution<int> distribution(0, distribLimit);
@@ -158,12 +184,17 @@ void GetRandomDistribution(int distribLimit, int numOfRndValues, vector<int> &di
     }
 }
 
-vec2 GetRandomPoint() {
+vec2 GetRandomPoint(int numOfRndValues=2, vector<vec2> testList= {}, bool radius=false) {
     // Limit will be the Dimensions
     vector<int> rndNodePoint = {};
+    GetRandomDistribution(NROWS, numOfRndValues, rndNodePoint);
 
-    GetRandomDistribution(NROWS, 2, rndNodePoint);
-
+    if(radius)
+    {
+        // end point, factory
+        return testList.at((rndNodePoint.at((rand() % numOfRndValues)) % NCOLS));
+    }
+    // start point, house
     return {(rndNodePoint.at(0) % NCOLS), (rndNodePoint.at(1) % NROWS)};
 }
 
