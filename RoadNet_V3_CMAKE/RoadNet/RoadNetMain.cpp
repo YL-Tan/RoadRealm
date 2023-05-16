@@ -154,7 +154,7 @@ bool AreValidDraggedCells(GridPrimitive &gridPrimitive) {
 
     int i = 0;
     float rowDiff = 0, colDiff = 0;
-    bool partOfCross = false, isSameAxis = false;
+    bool partOfCross = false, isValidDrag = false;
 
     // Validate Cell
     vec2 ptlHouse = PREV_DRAGGED_CELLS.at(i);
@@ -164,7 +164,7 @@ bool AreValidDraggedCells(GridPrimitive &gridPrimitive) {
     Node factoryNode = gridPrimitive.GetNode(ptlFactory);
 
     if (houseNode.currentState != CLOSED_HOUSE || factoryNode.currentState != CLOSED_FACTORY) {
-        return isSameAxis;
+        return isValidDrag;
     }
 
     while (i < PREV_DRAGGED_CELLS.size() - 1) {
@@ -177,15 +177,15 @@ bool AreValidDraggedCells(GridPrimitive &gridPrimitive) {
         partOfCross = (curCell.x == prevCell.x) || (curCell.y == prevCell.y);
 
         if (rowDiff > 1 || colDiff > 1 || !partOfCross) {
-            isSameAxis = false;
+            isValidDrag = false;
             break;
         }
 
-        isSameAxis = true;
+        isValidDrag = true;
         i += 1;
     }
 
-    return isSameAxis;
+    return isValidDrag;
 }
 
 void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
@@ -193,8 +193,6 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
 
         Vehicle vehicleRunner(-.2f, .4f);
         NodePosition homePos, factoryPos;
-
-        int counter = 0, homeIndex = -1, factoryIndex = -1;
 
         string pathHashKey;
 
@@ -210,24 +208,20 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
                 if (getNode.currentState == CLOSED_HOUSE) {
                     vehicleRunner.overlayColor = getNode.overlayColor;
                     homePos = getNode.currentPos;
-                    homeIndex = counter;
                 }
                 if (getNode.currentState == CLOSED_FACTORY) {
                     factoryPos = getNode.currentPos;
-                    factoryIndex = counter;
                 }
-                counter += 1;
             }
             cout << "Route: " << pathHashKey << "\n";
 
             // Home --TO--> Factory Order
-            if (homeIndex < factoryIndex && (int) PREV_DRAGGED_CELLS.size() <= currNumRoads) {
+            if ((int) PREV_DRAGGED_CELLS.size() <= currNumRoads) {
                 LinkedPathFormulation(gridPrimitive, homePos, factoryPos, vehicleRunner, pathHashKey);
 
             } else {
                 cout << "Not enough road! Or Invalid Path Selection" << endl;
             }
-
         }
 
         cout << "Dragged Status:\t" << isValidDrag << "\n";
@@ -318,11 +312,9 @@ void MouseButton(float xmouse, float ymouse, bool left, bool down) {
 
         if (application == GAME_STATE && myResetButton.Hit(xmouse, ymouse)) {
             ACTIVE_GAME_RESET = true;
-            //resetGameState();
         } else if (application == GAME_STATE && myExitButton.Hit(xmouse, ymouse)) {
             application = STARTING_MENU;
             ACTIVE_GAME_RESET = true;
-            //resetGameState();
             infoPanel.AddMessage(LOGS_MSG_LABEL, "", WHITE);
         } else if (application == STARTING_MENU && myStartButton.Hit(xmouse, ymouse)) {
             application = GAME_STATE;
@@ -465,13 +457,9 @@ int main(int ac, char **av) {
     while (!glfwWindowShouldClose(w)) {
         Update();
 
-
-
         FRAMES_PER_SECONDS = NUM_OF_FRAMES / (glfwGetTime() - INIT_FPS_TIME);
 
         Display(gridPrimitive);
-
-
 
         NUM_OF_FRAMES += 1;
 
