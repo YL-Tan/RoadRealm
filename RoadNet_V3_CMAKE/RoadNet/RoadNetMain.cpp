@@ -19,6 +19,7 @@
 #include <map>
 #include <iomanip>
 #include <sstream>
+#include <fstream>
 #include "Sprite.h"
 
 using namespace std;
@@ -30,6 +31,7 @@ bool GLOBAL_MOUSE_DOWN = false, GLOBAL_PAUSE = false, GLOBAL_DRAW_BORDERS = fals
 double REPLENISH_INTERVAL = 10.0, FRAMES_PER_SECONDS = 0;
 int REPLENISH_ROADS_NUM = 20;
 float FONT_SCALE = 10.0f;
+string LOCAL_STORAGE = "RoadNet/Storage/best_record.txt";
 
 vec2 CURRENT_CLICKED_CELL((NROWS + NCOLS), (NROWS + NCOLS));
 
@@ -63,6 +65,38 @@ string formatDuration(const chrono::duration<double> &duration) {
        << setw(2) << setfill('0') << seconds << "S";
 
     return ss.str();
+}
+
+void setBestRecord(double bestRecord) {
+    std::ofstream file(LOCAL_STORAGE);
+
+    if (file.is_open()) {
+        file << bestRecord;
+    }
+
+    file.close();
+}
+
+double getBestRecord() {
+    std::ifstream file(LOCAL_STORAGE);
+    double longestDuration = 0.0;
+
+    if (file.is_open()) {
+        file >> longestDuration;
+    }
+
+    file.close();
+
+    return longestDuration;
+}
+
+void checkAndSaveBestRecord(chrono::duration<double> gameClock) {
+    double newRecord = gameClock.count();
+    double currentBestScore = getBestRecord();
+
+    if (newRecord > currentBestScore) {
+        setBestRecord(newRecord);
+    }
 }
 
 void replenishRoads() {
@@ -322,7 +356,7 @@ void ResetGameState(GridPrimitive &gridPrimitive) {
         GLOBAL_PAUSE = false;
         GLOBAL_DRAW_BORDERS = false;
 
-        currNumRoads = 10;
+        currNumRoads = 20;
         lastReplenishTime = 0.0;
         status = "Draw";
 
@@ -356,6 +390,9 @@ void MouseButton(float xmouse, float ymouse, bool left, bool down) {
             application = STARTING_MENU;
             ACTIVE_GAME_RESET = true;
             infoPanel.AddMessage(LOGS_MSG_LABEL_2, "", YELLOW);
+
+            // Needs to remove, we need to set up a game_ending_state
+            checkAndSaveBestRecord(gameClock);
         } else if (application == STARTING_MENU && myStartButton.Hit(xmouse, ymouse)) {
             application = GAME_STATE;
         } else if (application == STARTING_MENU && myQuitButton.Hit(xmouse, ymouse)) {
@@ -423,6 +460,16 @@ void Display(GridPrimitive gridPrimitive) {
         backGround.Display();
         myStartButton.Display();
         myQuitButton.Display();
+
+        // Best record
+        double bestRecord = getBestRecord();
+        if (bestRecord != 0.0) {
+            chrono::duration<double> longestDuration(bestRecord);
+            Text(GLOBAL_W / 2 - 95, GLOBAL_H / 2 + 50, BLACK, FONT_SCALE, ("BEST RECORD: " + formatDuration(longestDuration)).c_str());
+        }
+        else {
+            Text(GLOBAL_W / 2 - 95, GLOBAL_H / 2 + 50, BLACK, FONT_SCALE, "BEST RECORD: 00H00M00S");
+        }
     }
     if (application == GAME_STATE) {
         FONT_SCALE = 12.0f;
@@ -466,11 +513,11 @@ void Resize(int width, int height) {
 }
 
 int main(int ac, char **av) {
-    myResetButton.Initialize("../RoadNet/Images/resetButton.png");
-    myExitButton.Initialize("../RoadNet/Images/exitButton.png");
-    myStartButton.Initialize("../RoadNet/Images/startButton.png");
-    myQuitButton.Initialize("../RoadNet/Images/quitButton.png");
-    backGround.Initialize("../RoadNet/Images/background.jpg");
+    myResetButton.Initialize("RoadNet/Images/resetButton.png");
+    myExitButton.Initialize("RoadNet/Images/exitButton.png");
+    myStartButton.Initialize("RoadNet/Images/startButton.png");
+    myQuitButton.Initialize("RoadNet/Images/quitButton.png");
+    backGround.Initialize("RoadNet/Images/background.jpg");
 
     RegisterMouseButton(MouseButton);
     RegisterMouseMove(MouseMove);
