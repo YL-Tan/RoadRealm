@@ -39,7 +39,7 @@ vector<vec2> PREV_DRAGGED_CELLS;
 
 InfoPanel infoPanel;
 ApplicationStates application = STARTING_MENU;
-Sprite myResetButton, myExitButton, myStartButton, myQuitButton, backGround;
+Sprite myResetButton, myExitButton, myStartButton, myQuitButton, backGround, myPauseButton, myResumeButton;
 
 GLFWwindow *w = InitGLFW(100, 100, APP_WIDTH, APP_HEIGHT, "RoadRealm");
 
@@ -113,7 +113,7 @@ void Update() {
     time_t now = clock();
     float dt = (float) (now - oldtime) / CLOCKS_PER_SEC;
 
-    if (!GLOBAL_PAUSE) {
+    if (application == GAME_STATE && !GLOBAL_PAUSE) {
         dt = (float) (now - oldtime) / CLOCKS_PER_SEC;
         oldtime = now;
         for (auto &runnerLinkers: ROAD_RUNNERS) {
@@ -353,6 +353,8 @@ void MouseButton(float xmouse, float ymouse, bool left, bool down) {
 
         if (application == GAME_STATE && myResetButton.Hit(xmouse, ymouse)) {
             ACTIVE_GAME_RESET = true;
+        } else if (application == GAME_STATE && myPauseButton.Hit(xmouse, ymouse)) {
+            GLOBAL_PAUSE = !GLOBAL_PAUSE;
         } else if (application == GAME_STATE && myExitButton.Hit(xmouse, ymouse)) {
             application = STARTING_MENU;
             ACTIVE_GAME_RESET = true;
@@ -420,7 +422,7 @@ void Display(GridPrimitive gridPrimitive) {
     glDisable(GL_DEPTH_TEST);
 
     UseDrawShader(ScreenMode());
-
+    
     if (application == STARTING_MENU) {
         FONT_SCALE = 13.0f;
 
@@ -442,6 +444,12 @@ void Display(GridPrimitive gridPrimitive) {
         FONT_SCALE = 12.0f;
         myResetButton.Display();
         myExitButton.Display();
+        if (GLOBAL_PAUSE) {
+            myPauseButton.Display();
+        }
+        else {
+            myResumeButton.Display();
+        }
 
         gridPrimitive.DrawGrid();
 
@@ -480,11 +488,13 @@ void Resize(int width, int height) {
 }
 
 int main(int ac, char **av) {
-    myResetButton.Initialize("../RoadNet/Images/resetButton.png");
-    myExitButton.Initialize("../RoadNet/Images/exitButton.png");
-    myStartButton.Initialize("../RoadNet/Images/startButton.png");
-    myQuitButton.Initialize("../RoadNet/Images/quitButton.png");
-    backGround.Initialize("../RoadNet/Images/background.jpg");
+    myResetButton.Initialize("RoadNet/Images/resetButton.png");
+    myExitButton.Initialize("RoadNet/Images/exitButton.png");
+    myStartButton.Initialize("RoadNet/Images/startButton.png");
+    myQuitButton.Initialize("RoadNet/Images/quitButton.png");
+    backGround.Initialize("RoadNet/Images/background.jpg");
+    myPauseButton.Initialize("RoadNet/Images/pauseButton.png");
+    myResumeButton.Initialize("RoadNet/Images/resumeButton.png");
 
     RegisterMouseButton(MouseButton);
     RegisterMouseMove(MouseMove);
@@ -503,6 +513,12 @@ int main(int ac, char **av) {
 
     myExitButton.SetScale(vec2(.1f, .1f));
     myExitButton.SetPosition(vec2(.7f, -.75f));
+
+    myPauseButton.SetScale(vec2(.1f, .1f));
+    myPauseButton.SetPosition(vec2(.69f, -.25f));
+
+    myResumeButton.SetScale(vec2(.1f, .1f));
+    myResumeButton.SetPosition(vec2(.66f, -.25f));
 
     INIT_FPS_TIME = glfwGetTime();
 
