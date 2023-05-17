@@ -108,7 +108,7 @@ void replenishRoads() {
     }
 }
 
-void Update() {
+void Update(GridPrimitive &gridPrimitive) {
 
     time_t now = clock();
     float dt = (float) (now - oldtime) / CLOCKS_PER_SEC;
@@ -124,6 +124,8 @@ void Update() {
     } else {
         oldtime = now;
     }
+
+    gridPrimitive.GridUpdate();
 
     infoPanel.AddMessage(TIME_LABEL, "Time: " + formatDuration(gameClock), WHITE);
     infoPanel.AddMessage(DIMS_LABEL, "Grid DIM: (" + to_string(NROWS) + " by " + to_string(NCOLS) + ")", WHITE);
@@ -488,13 +490,13 @@ void Resize(int width, int height) {
 }
 
 int main(int ac, char **av) {
-    myResetButton.Initialize("RoadNet/Images/resetButton.png");
-    myExitButton.Initialize("RoadNet/Images/exitButton.png");
-    myStartButton.Initialize("RoadNet/Images/startButton.png");
-    myQuitButton.Initialize("RoadNet/Images/quitButton.png");
-    backGround.Initialize("RoadNet/Images/background.jpg");
-    myPauseButton.Initialize("RoadNet/Images/pauseButton.png");
-    myResumeButton.Initialize("RoadNet/Images/resumeButton.png");
+    myResetButton.Initialize("../RoadNet/Images/resetButton.png");
+    myExitButton.Initialize("../RoadNet/Images/exitButton.png");
+    myStartButton.Initialize("../RoadNet/Images/startButton.png");
+    myQuitButton.Initialize("../RoadNet/Images/quitButton.png");
+    backGround.Initialize("../RoadNet/Images/background.jpg");
+    myPauseButton.Initialize("../RoadNet/Images/pauseButton.png");
+    myResumeButton.Initialize("../RoadNet/Images/resumeButton.png");
 
     RegisterMouseButton(MouseButton);
     RegisterMouseMove(MouseMove);
@@ -525,7 +527,7 @@ int main(int ac, char **av) {
     GridPrimitive gridPrimitive;
 
     while (!glfwWindowShouldClose(w)) {
-        Update();
+        Update(gridPrimitive);
 
         FRAMES_PER_SECONDS = NUM_OF_FRAMES / (glfwGetTime() - INIT_FPS_TIME);
 

@@ -49,13 +49,14 @@ int APP_WIDTH = 1000, APP_HEIGHT = 800, X_POS = 20, Y_POS = 20,
         GLOBAL_W = APP_WIDTH - W_EDGE_BUFFER, GLOBAL_H = APP_HEIGHT - H_EDGE_BUFFER;
 
 int GRID_W = GLOBAL_W * 0.75, DISP_W = GLOBAL_W - (GLOBAL_W * 0.22); // +  150;
-float DX = (float) GRID_W / NCOLS, DY = (float) GLOBAL_H / NROWS;
+float DX = (float) GRID_W / NCOLS, DY = (float) GLOBAL_H / NROWS, MAX_DIAMETER_SIZE = 25, MAX_CIR_EXPANSION = 0.6, DIAMETER_PERCENT = 0, ANIMATION_SPEED = 1, DIAMETER_LENGTH = 0;
 
 const vec3 WHITE(1, 1, 1), BLACK(0, 0, 0), GREY(.5, .5, .5), RED(1, 0, 0),
         GREEN(0, 1, 0), BLUE(0, 0, 1), YELLOW(1, 1, 0),
         ORANGE(1, .55f, 0), PURPLE(.8f, .1f, .5f), CYAN(0, 1, 1), PALE_GREY(.8, .8, .8);
 
 GameplayState globalState = DRAW_STATE;
+bool REDUCE_DIAMETER = true;
 
 struct InfoPanel {
 
@@ -265,12 +266,54 @@ int CombineDigits(int leftDigit, int rightDigit) {
     return (NCOLS * leftDigit) + rightDigit;
 }
 
+template<typename D>
+D GetMin(D digit1, D digit2)
+{
+    if (std::is_same<D, int>::value || std::is_same<D, unsigned >::value || std::is_same<D, double>::value || std::is_same<D, float>::value)
+    {
+        if(digit1 < digit2)
+        {
+            return digit1;
+        }
+        return digit2;
+    }
+
+    throw::invalid_argument("Only Numbers in int, unsigned int, double, float in morphological form allowed");
+}
+
+float GetCirDiam(bool animateDraw) {
+    if(animateDraw)
+    {
+        if((REDUCE_DIAMETER && DIAMETER_PERCENT > MAX_DIAMETER_SIZE) || (!REDUCE_DIAMETER && DIAMETER_PERCENT < 0))
+        {
+            //    cout << "Hit: " << MAX_DIAMETER_SIZE << "\t" << diamPercent << "\t" << diameterLength << "\t" << decreaseRadius << "\n";
+            REDUCE_DIAMETER = !REDUCE_DIAMETER;
+        }
+        if(REDUCE_DIAMETER)
+        {
+            DIAMETER_PERCENT = DIAMETER_PERCENT + ANIMATION_SPEED;
+        }
+        if(!REDUCE_DIAMETER)
+        {
+            DIAMETER_PERCENT = DIAMETER_PERCENT - ANIMATION_SPEED;
+        }
+
+        DIAMETER_LENGTH = MAX_DIAMETER_SIZE - DIAMETER_PERCENT;
+
+        // cout << " &&  Latency: " << MAX_DIAMETER_SIZE << "\t" << diamPercent << "\t" << diameterLength << "\t" << decreaseRadius << "\n";
+        return DIAMETER_LENGTH;
+    }
+    return MAX_DIAMETER_SIZE;
+}
+
 struct Node {
     NodePosition currentPos;
     vec3 color = WHITE;
     vec3 overlayColor = WHITE;
     NodeStates currentState = OPEN;
     NodeStates transState = POTENTIAL_ROAD;
+
+    bool isConnected = false;
 
     Node() {}
 
@@ -322,7 +365,7 @@ struct Vehicle {
             vec2 p = PointOnPath(dist, runnerPath);
 
             // Draw Disk Dot
-            Disk(vec2(X_POS + (p.x + .5) * DX, Y_POS + (p.y + .5) * DY), 20, overlayColor);
+            Disk(vec2(X_POS + (p.x + .5) * DX, Y_POS + (p.y + .5) * DY), (MAX_DIAMETER_SIZE * 0.5f), overlayColor);
 
             drawLogs = "runner pos: " + to_string(p.x) + " " + to_string(p.y);
         }

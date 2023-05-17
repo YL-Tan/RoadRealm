@@ -7,8 +7,8 @@
 #include "RoadNetShared.h"
 
 struct DestinationObjectives {
-    Node houseNode;
-    Node factoryNode;
+    Node &houseNode;
+    Node &factoryNode;
     bool destLinked = false;
 };
 
@@ -60,6 +60,9 @@ public:
                 IsSimilarNodePos(factoryPos, objectives.factoryNode.currentPos) && objectives.destLinked != isLinked) {
                 // Update Performed.
                 objectives.destLinked = isLinked;
+
+                objectives.houseNode.isConnected = isLinked;
+                objectives.factoryNode.isConnected = isLinked;
                 return true;
             }
         }
@@ -92,7 +95,7 @@ public:
 
     void DrawGrid() {
         // Draw All Cells
-        for (Node cell: gridNodes) {
+        for (Node &cell: gridNodes) {
 
             // Draw Grid
             DrawRectangle(cell.currentPos.PosWindowProj().x, cell.currentPos.PosWindowProj().y,
@@ -101,11 +104,11 @@ public:
 
             if (cell.currentState == CLOSED_HOUSE) {
                 Disk(vec2(X_POS + (cell.currentPos.col + .5) * DX, Y_POS + (cell.currentPos.row + .5) * DY),
-                     25, cell.overlayColor);
+                     GetCirDiam(!cell.isConnected), cell.overlayColor);
             }
             if (cell.currentState == CLOSED_FACTORY) {
                 Disk(vec2(X_POS + (cell.currentPos.col + .5) * DX, Y_POS + (cell.currentPos.row + .5) * DY),
-                     25, cell.overlayColor);
+                     GetCirDiam(!cell.isConnected), cell.overlayColor);
 
                 // Horizontal Line
                 Line(vec2(X_POS + (cell.currentPos.col + 0.0) * DX, Y_POS + (cell.currentPos.row + 0.5) * DY),
@@ -118,6 +121,12 @@ public:
                      1.0f, cell.overlayColor);
             }
         }
+    }
+
+    void GridUpdate()
+    {
+        // GetMin(Width, Height) -> The Smallest Length
+        MAX_DIAMETER_SIZE = GetMin<float>((int) DX - 1, (int) DY - 1) * MAX_CIR_EXPANSION;
     }
 
     Node NodeHandler(int nodeIndex) {
