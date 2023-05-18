@@ -339,8 +339,9 @@ void ResetGameState(GridPrimitive &gridPrimitive) {
 
         for (int i = 0; i < 5; i++) {
             vec2 rndStPoint = GetRandomPoint();
-            vec2 rndEdPoint = GetRandomPoint(2, FindNeighbors(rndStPoint, (NCOLS / 2)), true);
-
+            vec2 rndEdPoint = GetRandomPoint(5, 3, rndStPoint);
+            cout << "Pt1: " << rndStPoint.y << "\t" << rndStPoint.x << "\t Pt2: " << rndEdPoint.y << "\t"
+                 << rndEdPoint.x << "\n";
             gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
                                           (int) rndEdPoint.x);
         }
@@ -424,7 +425,7 @@ void Display(GridPrimitive gridPrimitive) {
     glDisable(GL_DEPTH_TEST);
 
     UseDrawShader(ScreenMode());
-    
+
     if (application == STARTING_MENU) {
         FONT_SCALE = 13.0f;
 
@@ -436,9 +437,9 @@ void Display(GridPrimitive gridPrimitive) {
         double bestRecord = getBestRecord();
         if (bestRecord != 0.0) {
             chrono::duration<double> longestDuration(bestRecord);
-            Text(GLOBAL_W / 2 - 95, GLOBAL_H / 2 + 50, BLACK, FONT_SCALE, ("BEST RECORD: " + formatDuration(longestDuration)).c_str());
-        }
-        else {
+            Text(GLOBAL_W / 2 - 95, GLOBAL_H / 2 + 50, BLACK, FONT_SCALE,
+                 ("BEST RECORD: " + formatDuration(longestDuration)).c_str());
+        } else {
             Text(GLOBAL_W / 2 - 95, GLOBAL_H / 2 + 50, BLACK, FONT_SCALE, "BEST RECORD: 00H00M00S");
         }
     }
@@ -448,8 +449,7 @@ void Display(GridPrimitive gridPrimitive) {
         myExitButton.Display();
         if (GLOBAL_PAUSE) {
             myPauseButton.Display();
-        }
-        else {
+        } else {
             myResumeButton.Display();
         }
 

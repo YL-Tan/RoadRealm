@@ -49,7 +49,8 @@ int APP_WIDTH = 1000, APP_HEIGHT = 800, X_POS = 20, Y_POS = 20,
         GLOBAL_W = APP_WIDTH - W_EDGE_BUFFER, GLOBAL_H = APP_HEIGHT - H_EDGE_BUFFER;
 
 int GRID_W = GLOBAL_W * 0.75, DISP_W = GLOBAL_W - (GLOBAL_W * 0.22); // +  150;
-float DX = (float) GRID_W / NCOLS, DY = (float) GLOBAL_H / NROWS, MAX_DIAMETER_SIZE = 25, MAX_CIR_EXPANSION = 0.6, DIAMETER_PERCENT = 0, ANIMATION_SPEED = 1, DIAMETER_LENGTH = 0;
+float DX = (float) GRID_W / NCOLS, DY = (float) GLOBAL_H /
+                                        NROWS, MAX_DIAMETER_SIZE = 25, MAX_CIR_EXPANSION = 0.6, DIAMETER_PERCENT = 0, ANIMATION_SPEED = 1, DIAMETER_LENGTH = 0;
 
 const vec3 WHITE(1, 1, 1), BLACK(0, 0, 0), GREY(.5, .5, .5), RED(1, 0, 0),
         GREEN(0, 1, 0), BLUE(0, 0, 1), YELLOW(1, 1, 0),
@@ -150,16 +151,14 @@ void DrawBorders() {
     Line(vec2(5, 5), vec2(GLOBAL_W, 5), 1, WHITE);
 }
 
-bool IsInGrid(int row, int col)
-{
-    if ((row >= NROWS || row < 0) || ((col >= NCOLS) || (col < 0)))
-    {
+bool IsInGrid(int row, int col) {
+    if ((row >= NROWS || row < 0) || ((col >= NCOLS) || (col < 0))) {
         return false;
     }
     return true;
 }
 
-vector<vec2> FindNeighbors(vec2 startingPoint, int dist)
+/*vector<vec2> FindNeighbors(vec2 startingPoint, int dist)
 {
     vector<vec2> potentialLocations;
     for (int i = (int) startingPoint.y - dist; i <= (int) startingPoint.y + dist; i++)
@@ -174,6 +173,13 @@ vector<vec2> FindNeighbors(vec2 startingPoint, int dist)
         }
     }
     return potentialLocations;
+}*/
+
+int GetDistance(const vec2 &firstPoint, const vec2 &secondPoint) {
+    int xAxisDist = pow((secondPoint.x - firstPoint.x), 2);
+    int yAxisDist = pow((secondPoint.y - firstPoint.y), 2);
+
+    return sqrt(xAxisDist + yAxisDist);
 }
 
 void GetRandomDistribution(int distribLimit, int numOfRndValues, vector<int> &distribRndPlacement) {
@@ -185,17 +191,35 @@ void GetRandomDistribution(int distribLimit, int numOfRndValues, vector<int> &di
     }
 }
 
-vec2 GetRandomPoint(int numOfRndValues=2, vector<vec2> testList= {}, bool radius=false) {
-    // Limit will be the Dimensions
+vec2 GetRandomPoint(int numOfRndValues = 2, int radiusLimit = 0, const vec2 &originPoint = {}) {
     vector<int> rndNodePoint = {};
     GetRandomDistribution(NROWS, numOfRndValues, rndNodePoint);
 
-    if(radius)
-    {
-        // end point, factory
-        return testList.at((rndNodePoint.at((rand() % numOfRndValues)) % NCOLS));
+    if (radiusLimit > 0) {
+        vec2 potentialPt(-1, -1), currentPt;
+        int curRadiusDiff = 0, prevRadiusDiff = 0;
+        for (int i = 0; i < rndNodePoint.size() - 1; i++) {
+            currentPt.x = (rndNodePoint.at(i) % NCOLS);
+            currentPt.y = (rndNodePoint.at(i + 1) % NROWS);
+
+            int ptsDistance = GetDistance(currentPt, originPoint);
+
+            curRadiusDiff = abs(radiusLimit - ptsDistance);
+
+            if (curRadiusDiff >= prevRadiusDiff && curRadiusDiff <= radiusLimit) {
+                potentialPt = currentPt;
+                prevRadiusDiff = curRadiusDiff;
+            }
+            cout << currentPt.x << "\t" << currentPt.y << "\t" << ptsDistance << "\t" << curRadiusDiff << "\t"
+                 << prevRadiusDiff << "\n";
+
+        }
+        if (potentialPt.y == -1 || potentialPt.x == -1) {
+            cout << "All Points Above Set Radius Range";
+            return currentPt;
+        }
+        return potentialPt;
     }
-    // start point, house
     return {(rndNodePoint.at(0) % NCOLS), (rndNodePoint.at(1) % NROWS)};
 }
 
@@ -267,34 +291,28 @@ int CombineDigits(int leftDigit, int rightDigit) {
 }
 
 template<typename D>
-D GetMin(D digit1, D digit2)
-{
-    if (std::is_same<D, int>::value || std::is_same<D, unsigned >::value || std::is_same<D, double>::value || std::is_same<D, float>::value)
-    {
-        if(digit1 < digit2)
-        {
+D GetMin(D digit1, D digit2) {
+    if (std::is_same<D, int>::value || std::is_same<D, unsigned>::value || std::is_same<D, double>::value ||
+        std::is_same<D, float>::value) {
+        if (digit1 < digit2) {
             return digit1;
         }
         return digit2;
     }
 
-    throw::invalid_argument("Only Numbers in int, unsigned int, double, float in morphological form allowed");
+    throw ::invalid_argument("Only Numbers in int, unsigned int, double, float in morphological form allowed");
 }
 
 float GetCirDiam(bool animateDraw) {
-    if(animateDraw)
-    {
-        if((REDUCE_DIAMETER && DIAMETER_PERCENT > MAX_DIAMETER_SIZE) || (!REDUCE_DIAMETER && DIAMETER_PERCENT < 0))
-        {
+    if (animateDraw) {
+        if ((REDUCE_DIAMETER && DIAMETER_PERCENT > MAX_DIAMETER_SIZE) || (!REDUCE_DIAMETER && DIAMETER_PERCENT < 0)) {
             //    cout << "Hit: " << MAX_DIAMETER_SIZE << "\t" << diamPercent << "\t" << diameterLength << "\t" << decreaseRadius << "\n";
             REDUCE_DIAMETER = !REDUCE_DIAMETER;
         }
-        if(REDUCE_DIAMETER)
-        {
+        if (REDUCE_DIAMETER) {
             DIAMETER_PERCENT = DIAMETER_PERCENT + ANIMATION_SPEED;
         }
-        if(!REDUCE_DIAMETER)
-        {
+        if (!REDUCE_DIAMETER) {
             DIAMETER_PERCENT = DIAMETER_PERCENT - ANIMATION_SPEED;
         }
 

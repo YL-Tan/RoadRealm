@@ -7,6 +7,7 @@
 #include "RoadNetShared.h"
 
 struct DestinationObjectives {
+    string dstKey;
     Node &houseNode;
     Node &factoryNode;
     bool destLinked = false;
@@ -15,6 +16,7 @@ struct DestinationObjectives {
 class GridPrimitive {
 private:
     vec3 nodesDefaultColor = WHITE;
+    vector<DestinationObjectives> gridDestObjectives;
 
     void FormulateGrid() {
         for (int row = 0; row < NROWS; row++) {
@@ -39,11 +41,18 @@ private:
         return nodePosComp.AlignmentPosMatches(nodePosComp1);
     }
 
+    bool DoesDestinationExists(const string &dstKeyVal) {
+        for (DestinationObjectives &objectives: gridDestObjectives) {
+            if (objectives.dstKey == dstKeyVal) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 public:
     // N * N grid's nodes/cells
     vector<Node> gridNodes = {};
-
-    vector<DestinationObjectives> gridDestObjectives;
 
     GridPrimitive() {
         FormulateGrid();
@@ -73,21 +82,25 @@ public:
     bool AddNewObjective(int startR, int startC, int endR, int endC) {
         int startNIndex = CombineDigits(startR, startC);
         int endNIndex = CombineDigits(endR, endC);
+        // Formulate Key
+        string encodeKey = to_string(startNIndex) + to_string(endNIndex);
 
-        if (startNIndex < gridNodes.size() && endNIndex < gridNodes.size()) {
-            if (!IsAClosedBuilding(gridNodes.at(startNIndex)) && !IsAClosedBuilding(gridNodes.at(endNIndex))) {
-                // House = Start, Factory = End
-                gridNodes.at(startNIndex).currentState = CLOSED_HOUSE;
-                gridNodes.at(endNIndex).currentState = CLOSED_FACTORY;
+        if (!DoesDestinationExists(encodeKey)) {
+            if (startNIndex < gridNodes.size() && endNIndex < gridNodes.size()) {
+                if (!IsAClosedBuilding(gridNodes.at(startNIndex)) && !IsAClosedBuilding(gridNodes.at(endNIndex))) {
+                    // House = Start, Factory = End
+                    gridNodes.at(startNIndex).currentState = CLOSED_HOUSE;
+                    gridNodes.at(endNIndex).currentState = CLOSED_FACTORY;
 
-                vec3 shrRandColor = GetRandomColor();
+                    vec3 shrRandColor = GetRandomColor();
 
-                gridNodes.at(startNIndex).overlayColor = shrRandColor;
-                gridNodes.at(endNIndex).overlayColor = shrRandColor;
+                    gridNodes.at(startNIndex).overlayColor = shrRandColor;
+                    gridNodes.at(endNIndex).overlayColor = shrRandColor;
 
-                // Add To Objectives
-                gridDestObjectives.push_back({gridNodes.at(startNIndex), gridNodes.at(endNIndex)});
-                return true;
+                    // Add To Objectives
+                    gridDestObjectives.push_back({encodeKey, gridNodes.at(startNIndex), gridNodes.at(endNIndex)});
+                    return true;
+                }
             }
         }
         return false;
@@ -123,8 +136,7 @@ public:
         }
     }
 
-    void GridUpdate()
-    {
+    void GridUpdate() {
         // GetMin(Width, Height) -> The Smallest Length
         MAX_DIAMETER_SIZE = GetMin<float>((int) DX - 1, (int) DY - 1) * MAX_CIR_EXPANSION;
     }
@@ -168,11 +180,9 @@ public:
         return {};
     }
 
-    bool IsAClosedNodeState(vec2 &gridAxisPoint)
-    {
+    bool IsAClosedNodeState(vec2 &gridAxisPoint) {
         Node node = GetNode(gridAxisPoint);
-        if(node.currentState == CLOSED_FACTORY || node.currentState == CLOSED_HOUSE )
-        {
+        if (node.currentState == CLOSED_FACTORY || node.currentState == CLOSED_HOUSE) {
             return true;
         }
         return false;
