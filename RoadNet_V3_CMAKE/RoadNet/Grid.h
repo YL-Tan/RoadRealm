@@ -7,7 +7,6 @@
 #include "RoadNetShared.h"
 
 struct DestinationObjectives {
-    string dstKey;
     Node &houseNode;
     Node &factoryNode;
     bool destLinked = false;
@@ -30,20 +29,17 @@ private:
         }
     }
 
-    bool IsAClosedBuilding(const Node &node) {
-        if (node.currentState == CLOSED_FACTORY || node.currentState == CLOSED_HOUSE) {
-            return true;
-        }
-        return false;
-    }
-
     bool IsSimilarNodePos(NodePosition nodePosComp, NodePosition nodePosComp1) {
         return nodePosComp.AlignmentPosMatches(nodePosComp1);
     }
 
-    bool DoesDestinationExists(const string &dstKeyVal) {
+    bool DoesDestinationExists(vec2 potHouse, vec2 potFactory) {
         for (DestinationObjectives &objectives: gridDestObjectives) {
-            if (objectives.dstKey == dstKeyVal) {
+
+            bool isHouseDuplicate = objectives.houseNode.currentPos.AlignmentPosMatches(potHouse.y, potHouse.x);
+            bool isFactDuplicate = objectives.factoryNode.currentPos.AlignmentPosMatches(potFactory.y, potFactory.x);
+
+            if (isHouseDuplicate || isFactDuplicate) {
                 return true;
             }
         }
@@ -80,14 +76,13 @@ public:
     }
 
     bool AddNewObjective(int startR, int startC, int endR, int endC) {
-        int startNIndex = CombineDigits(startR, startC);
-        int endNIndex = CombineDigits(endR, endC);
-        // Formulate Key
-        string encodeKey = to_string(startNIndex) + to_string(endNIndex);
 
-        if (!DoesDestinationExists(encodeKey)) {
+        if (!DoesDestinationExists(vec2(startR, startC), vec2(endR, endC))) {
+            int startNIndex = CombineDigits(startR, startC);
+            int endNIndex = CombineDigits(endR, endC);
+
             if (startNIndex < gridNodes.size() && endNIndex < gridNodes.size()) {
-                if (!IsAClosedBuilding(gridNodes.at(startNIndex)) && !IsAClosedBuilding(gridNodes.at(endNIndex))) {
+                if (!IsAClosedNodeState(gridNodes.at(startNIndex)) && !IsAClosedNodeState(gridNodes.at(endNIndex))) {
                     // House = Start, Factory = End
                     gridNodes.at(startNIndex).currentState = CLOSED_HOUSE;
                     gridNodes.at(endNIndex).currentState = CLOSED_FACTORY;
@@ -98,7 +93,7 @@ public:
                     gridNodes.at(endNIndex).overlayColor = shrRandColor;
 
                     // Add To Objectives
-                    gridDestObjectives.push_back({encodeKey, gridNodes.at(startNIndex), gridNodes.at(endNIndex)});
+                    gridDestObjectives.push_back({gridNodes.at(startNIndex), gridNodes.at(endNIndex)});
                     return true;
                 }
             }
@@ -182,6 +177,13 @@ public:
 
     bool IsAClosedNodeState(vec2 &gridAxisPoint, bool favorClRoad=false) {
         Node node = GetNode(gridAxisPoint);
+        if (node.currentState == CLOSED_FACTORY || node.currentState == CLOSED_HOUSE || (favorClRoad && node.currentState == CLOSED_ROAD)) {
+            return true;
+        }
+        return false;
+    }
+
+    bool IsAClosedNodeState(const Node &node, bool favorClRoad=false) {
         if (node.currentState == CLOSED_FACTORY || node.currentState == CLOSED_HOUSE || (favorClRoad && node.currentState == CLOSED_ROAD)) {
             return true;
         }
