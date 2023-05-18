@@ -245,13 +245,6 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
                 if (getNode.currentState != CLOSED_HOUSE && getNode.currentState != CLOSED_FACTORY) {
                     vehicleRunner.overlayColor = houseNode.overlayColor;
                 }
-                /* if (getNode.currentState == CLOSED_HOUSE) {
-                     vehicleRunner.overlayColor = getNode.overlayColor;
-                     homePos = getNode.currentPos;
-                 }
-                 if (getNode.currentState == CLOSED_FACTORY) {
-                     factoryPos = getNode.currentPos;
-                 }*/
             }
             cout << "Route: " << pathHashKey << "\n";
 
@@ -260,10 +253,16 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
                 LinkedPathFormulation(gridPrimitive, houseNode.currentPos, factoryNode.currentPos, vehicleRunner,
                                       pathHashKey);
                 infoPanel.AddMessage(ERROR_MSG_LABEL_1, "Valid Linking", GREEN);
+                infoPanel.AddMessage(ERROR_MSG_LABEL_2, "Valid Path Selection", GREEN);
             } else {
-                // cout << "Not enough road! Or Invalid Path Selection" << endl;
                 infoPanel.AddMessage(ERROR_MSG_LABEL_2, "Not enough road!", RED);
             }
+        }
+        else
+        {
+            gridPrimitive.ResetNodes(PREV_DRAGGED_CELLS);
+            infoPanel.AddMessage(ERROR_MSG_LABEL_1, "InValid Linking", RED);
+            infoPanel.AddMessage(ERROR_MSG_LABEL_2, "Invalid Path Selection", RED);
         }
 
         infoPanel.AddMessage(ERROR_MSG_LABEL_2, "Invalid Path Selection", RED);

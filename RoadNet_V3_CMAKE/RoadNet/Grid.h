@@ -180,12 +180,25 @@ public:
         return {};
     }
 
-    bool IsAClosedNodeState(vec2 &gridAxisPoint) {
+    bool IsAClosedNodeState(vec2 &gridAxisPoint, bool favorClRoad=false) {
         Node node = GetNode(gridAxisPoint);
-        if (node.currentState == CLOSED_FACTORY || node.currentState == CLOSED_HOUSE) {
+        if (node.currentState == CLOSED_FACTORY || node.currentState == CLOSED_HOUSE || (favorClRoad && node.currentState == CLOSED_ROAD)) {
             return true;
         }
         return false;
+    }
+
+    void ResetNodes(vector<vec2> gridAxisPoints)
+    {
+        for(vec2 &pt : gridAxisPoints)
+        {
+            int mapToIndex = CombineDigits((int)pt.y, (int)pt.x);
+
+            if(!IsAClosedNodeState(pt, true) && mapToIndex < gridNodes.size())
+            {
+                gridNodes.at(mapToIndex).NodeReset();
+            }
+        }
     }
 
     void GridReset() {
