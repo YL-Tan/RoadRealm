@@ -209,6 +209,15 @@ public:
             cell.NodeReset();
         }
     }
+
+        bool IsAllDestinationLinked() {
+        for (DestinationObjectives& objectives : gridDestObjectives) {
+            if (objectives.destLinked == false) {
+                return false;
+            }
+        }
+        return true;
+    }
 };
 
 #endif //ROADREALM_ASTAR_H

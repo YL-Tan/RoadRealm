@@ -17,7 +17,7 @@ using namespace std;
 #define NCOLS 10
 #define H_EDGE_BUFFER 40
 #define W_EDGE_BUFFER 100
-#define INFO_MSG_SIZE 11
+#define INFO_MSG_SIZE 12
 
 enum NodeStates {
     OPEN, CLOSED_ROAD, CLOSED_HOUSE, CLOSED_FACTORY, POTENTIAL_ROAD
@@ -42,7 +42,8 @@ enum InfoLabelsIndex {
     ERROR_MSG_LABEL_1 = 7,
     ERROR_MSG_LABEL_2 = 8,
     LOGS_MSG_LABEL_1 = 9,
-    LOGS_MSG_LABEL_2 = 10
+    LOGS_MSG_LABEL_2 = 10,
+    COUNTDOWN = 11
 };
 
 int APP_WIDTH = 1000, APP_HEIGHT = 800, X_POS = 20, Y_POS = 20,

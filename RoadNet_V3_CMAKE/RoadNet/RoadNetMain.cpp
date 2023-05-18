@@ -26,7 +26,7 @@ using namespace std;
 
 unsigned int NUM_OF_FRAMES = 0;
 double INIT_FPS_TIME = 0;
-bool GLOBAL_MOUSE_DOWN = false, GLOBAL_PAUSE = false, GLOBAL_DRAW_BORDERS = false, ACTIVE_GAME_RESET = false;
+bool GLOBAL_MOUSE_DOWN = false, GLOBAL_PAUSE = false, GLOBAL_DRAW_BORDERS = false, ACTIVE_GAME_RESET = false, GAME_OVER = false;
 // In Seconds
 double REPLENISH_INTERVAL = 10.0, FRAMES_PER_SECONDS = 0;
 int REPLENISH_ROADS_NUM = 20;
@@ -47,6 +47,8 @@ time_t oldtime = clock();
 chrono::duration<double> gameClock;
 int currNumRoads = 20;
 double lastReplenishTime = 0.0;
+float countDown = 5.0f;
+float bufferTime = 5.0f;
 string status = "Draw";
 
 hash<string> STRING_HASH_FUN;
@@ -114,12 +116,33 @@ void Update(GridPrimitive &gridPrimitive) {
     float dt = (float) (now - oldtime) / CLOCKS_PER_SEC;
 
     if (application == GAME_STATE && !GLOBAL_PAUSE) {
-        dt = (float) (now - oldtime) / CLOCKS_PER_SEC;
+        dt = (float)(now - oldtime) / CLOCKS_PER_SEC;
         oldtime = now;
-        for (auto &runnerLinkers: ROAD_RUNNERS) {
+        for (auto& runnerLinkers : ROAD_RUNNERS) {
             runnerLinkers.second.vehicleRunner.Update(dt);
         }
         gameClock += chrono::duration<double>(dt);
+
+        if (!gridPrimitive.IsAllDestinationLinked()) {
+            if (bufferTime > 0) {
+                bufferTime -= dt;
+            }
+            else {
+                countDown -= dt;
+                if (countDown <= 0.0f) {
+                    checkAndSaveBestRecord(gameClock);
+                    GAME_OVER = true;
+                    ACTIVE_GAME_RESET = true;
+                    countDown = 5.0f;
+                    bufferTime = 5.0f;
+                    application = STARTING_MENU;
+                }
+            }
+        }
+        else {
+            countDown = 5.0f;  // reset countdown if all destinations are linked
+            bufferTime = 5.0f;
+        }
         replenishRoads();
     } else {
         oldtime = now;
@@ -326,6 +349,8 @@ void ResetGameState(GridPrimitive &gridPrimitive) {
 
         currNumRoads = 20;
         lastReplenishTime = 0.0;
+        countDown = 5.0f;
+        bufferTime = 5.0f;
         status = "Draw";
 
         infoPanel.AddMessage(LOGS_MSG_LABEL_2, "Reset", WHITE);
@@ -365,6 +390,7 @@ void MouseButton(float xmouse, float ymouse, bool left, bool down) {
             // Needs to remove, we need to set up a game_ending_state
             checkAndSaveBestRecord(gameClock);
         } else if (application == STARTING_MENU && myStartButton.Hit(xmouse, ymouse)) {
+            GAME_OVER = false;
             application = GAME_STATE;
         } else if (application == STARTING_MENU && myQuitButton.Hit(xmouse, ymouse)) {
             glfwSetWindowShouldClose(w, true);
@@ -441,6 +467,11 @@ void Display(GridPrimitive gridPrimitive) {
         } else {
             Text(GLOBAL_W / 2 - 95, GLOBAL_H / 2 + 50, BLACK, FONT_SCALE, "BEST RECORD: 00H00M00S");
         }
+
+        if (GAME_OVER) {
+            Text(GLOBAL_W / 2 - 85, GLOBAL_H / 2 + 100, RED, 30.0f, "Game Over");
+            infoPanel.AddMessage(COUNTDOWN, " ", WHITE);
+        }
     }
     if (application == GAME_STATE) {
         FONT_SCALE = 12.0f;
@@ -463,6 +494,7 @@ void Display(GridPrimitive gridPrimitive) {
         if (GLOBAL_DRAW_BORDERS) {
             DrawBorders();
         }
+        infoPanel.AddMessage(COUNTDOWN, "Countdown: " + to_string(countDown), WHITE);
     }
 
     infoPanel.InfoDisplay(FONT_SCALE);
@@ -489,13 +521,13 @@ void Resize(int width, int height) {
 }
 
 int main(int ac, char **av) {
-    myResetButton.Initialize("../RoadNet/Images/resetButton.png");
-    myExitButton.Initialize("../RoadNet/Images/exitButton.png");
-    myStartButton.Initialize("../RoadNet/Images/startButton.png");
-    myQuitButton.Initialize("../RoadNet/Images/quitButton.png");
-    backGround.Initialize("../RoadNet/Images/background.jpg");
-    myPauseButton.Initialize("../RoadNet/Images/pauseButton.png");
-    myResumeButton.Initialize("../RoadNet/Images/resumeButton.png");
+    myResetButton.Initialize("RoadNet/Images/resetButton.png");
+    myExitButton.Initialize("RoadNet/Images/exitButton.png");
+    myStartButton.Initialize("RoadNet/Images/startButton.png");
+    myQuitButton.Initialize("RoadNet/Images/quitButton.png");
+    backGround.Initialize("RoadNet/Images/background.jpg");
+    myPauseButton.Initialize("RoadNet/Images/pauseButton.png");
+    myResumeButton.Initialize("RoadNet/Images/resumeButton.png");
 
     RegisterMouseButton(MouseButton);
     RegisterMouseMove(MouseMove);
