@@ -153,7 +153,16 @@ public:
             return *node;
         }
         if (node->currentState == POTENTIAL_ROAD) {
-            node->currentState = node->transState;
+            if (REVERT_STATE) {
+                if (node->transState == OPEN) {
+                    node->currentState = CLOSED_ROAD;
+                }
+                if (node->transState == CLOSED_ROAD) {
+                    node->currentState = OPEN;
+                }
+            } else {
+                node->currentState = node->transState;
+            }
             node->transState = POTENTIAL_ROAD;
 
             if (node->currentState == CLOSED_ROAD) {
@@ -175,32 +184,30 @@ public:
         return {};
     }
 
-    bool IsAClosedNodeState(vec2 &gridAxisPoint, bool favorClRoad=false) {
+    bool IsAClosedNodeState(vec2 &gridAxisPoint, bool favorClRoad = false) {
         Node node = GetNode(gridAxisPoint);
-        if (node.currentState == CLOSED_FACTORY || node.currentState == CLOSED_HOUSE || (favorClRoad && node.currentState == CLOSED_ROAD)) {
+        if (node.currentState == CLOSED_FACTORY || node.currentState == CLOSED_HOUSE ||
+            (favorClRoad && node.currentState == CLOSED_ROAD)) {
             return true;
         }
         return false;
     }
 
-    bool IsAClosedNodeState(const Node &node, bool favorClRoad=false) {
-        if (node.currentState == CLOSED_FACTORY || node.currentState == CLOSED_HOUSE || (favorClRoad && node.currentState == CLOSED_ROAD)) {
+    bool IsAClosedNodeState(const Node &node, bool favorClRoad = false) {
+        if (node.currentState == CLOSED_FACTORY || node.currentState == CLOSED_HOUSE ||
+            (favorClRoad && node.currentState == CLOSED_ROAD)) {
             return true;
         }
         return false;
     }
 
-    void ResetNodes(vector<vec2> gridAxisPoints)
-    {
-        for(vec2 &pt : gridAxisPoints)
-        {
-            int mapToIndex = CombineDigits((int)pt.y, (int)pt.x);
-
-            if(!IsAClosedNodeState(pt, true) && mapToIndex < gridNodes.size())
-            {
-                gridNodes.at(mapToIndex).NodeReset();
-            }
+    void ResetNodes(vector<vec2> gridAxisPoints, bool enableReset) {
+        REVERT_STATE = enableReset;
+        for (vec2 &pt: gridAxisPoints) {
+            int mapToIndex = CombineDigits((int) pt.y, (int) pt.x);
+            NodeHandler(mapToIndex);
         }
+        REVERT_STATE = false;
     }
 
     void GridReset() {
@@ -210,8 +217,8 @@ public:
         }
     }
 
-        bool IsAllDestinationLinked() {
-        for (DestinationObjectives& objectives : gridDestObjectives) {
+    bool IsAllDestinationLinked() {
+        for (DestinationObjectives &objectives: gridDestObjectives) {
             if (objectives.destLinked == false) {
                 return false;
             }

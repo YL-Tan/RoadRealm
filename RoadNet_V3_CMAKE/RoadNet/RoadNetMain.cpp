@@ -116,9 +116,9 @@ void Update(GridPrimitive &gridPrimitive) {
     float dt = (float) (now - oldtime) / CLOCKS_PER_SEC;
 
     if (application == GAME_STATE && !GLOBAL_PAUSE) {
-        dt = (float)(now - oldtime) / CLOCKS_PER_SEC;
+        dt = (float) (now - oldtime) / CLOCKS_PER_SEC;
         oldtime = now;
-        for (auto& runnerLinkers : ROAD_RUNNERS) {
+        for (auto &runnerLinkers: ROAD_RUNNERS) {
             runnerLinkers.second.vehicleRunner.Update(dt);
         }
         gameClock += chrono::duration<double>(dt);
@@ -126,8 +126,7 @@ void Update(GridPrimitive &gridPrimitive) {
         if (!gridPrimitive.IsAllDestinationLinked()) {
             if (bufferTime > 0) {
                 bufferTime -= dt;
-            }
-            else {
+            } else {
                 countDown -= dt;
                 if (countDown <= 0.0f) {
                     checkAndSaveBestRecord(gameClock);
@@ -138,8 +137,7 @@ void Update(GridPrimitive &gridPrimitive) {
                     application = STARTING_MENU;
                 }
             }
-        }
-        else {
+        } else {
             countDown = 5.0f;  // reset countdown if all destinations are linked
             bufferTime = 5.0f;
         }
@@ -191,6 +189,8 @@ bool LinkedPathFormulation(GridPrimitive &gridPrimitive, NodePosition homePos, N
             RoadRunnerLinker runnerLinker(pathHashKey, vehicleRunner, true);
             ROAD_RUNNERS.insert({pathHashKey, runnerLinker});
             currNumRoads -= (int) PREV_DRAGGED_CELLS.size();
+
+            infoPanel.AddMessage(ERROR_MSG_LABEL_1, "Valid Linking", RED);
         }
     }
 
@@ -202,6 +202,8 @@ bool LinkedPathFormulation(GridPrimitive &gridPrimitive, NodePosition homePos, N
                 cout << pathHashKey << endl;
                 ROAD_RUNNERS.erase(findRunner);
                 currNumRoads += (int) PREV_DRAGGED_CELLS.size() - 2;
+
+                infoPanel.AddMessage(ERROR_MSG_LABEL_1, "Valid Linking", RED);
             }
         }
     }
@@ -242,7 +244,10 @@ bool AreValidDraggedCells(GridPrimitive &gridPrimitive, Node &houseNode, Node &f
         if (i > 0 && gridPrimitive.IsAClosedNodeState(prevCell, true)) {
             return false;
         }
-
+        if ((int) PREV_DRAGGED_CELLS.size() > currNumRoads) {
+            infoPanel.AddMessage(ERROR_MSG_LABEL_2, "Not enough road!", RED);
+            return false;
+        }
         i += 1;
     }
     return true;
@@ -252,45 +257,40 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
     if (!GLOBAL_MOUSE_DOWN && !PREV_DRAGGED_CELLS.empty()) {
 
         Vehicle vehicleRunner(-.2f, .4f);
-        // NodePosition homePos, factoryPos;
-
         Node houseNode, factoryNode;
         string pathHashKey;
 
-        bool isValidDrag = AreValidDraggedCells(gridPrimitive, houseNode, factoryNode);
+        bool isErrorCorrect = AreValidDraggedCells(gridPrimitive, houseNode, factoryNode);
 
-        if (isValidDrag) {
+        if (isErrorCorrect) {
 
             for (const vec2 &cell: PREV_DRAGGED_CELLS) {
 
-                Node getNode = ToggleNodeState((int) cell.x, (int) cell.y, gridPrimitive, vehicleRunner.runnerPath,
-                                               pathHashKey);
+                Node getNode = gridPrimitive.GetNode(vec2(cell.x,cell.y));
+                // Hash Key
+                pathHashKey += to_string(getNode.currentPos.row) + to_string(getNode.currentPos.col);
+                // Add To Path
+                vehicleRunner.runnerPath.push_back(getNode.currentPos);
+
                 if (getNode.currentState != CLOSED_HOUSE && getNode.currentState != CLOSED_FACTORY) {
                     vehicleRunner.overlayColor = houseNode.overlayColor;
                 }
             }
-            cout << "Route: " << pathHashKey << "\n";
-
-            // Home --TO--> Factory Order
-            if ((int) PREV_DRAGGED_CELLS.size() <= currNumRoads) {
-                LinkedPathFormulation(gridPrimitive, houseNode.currentPos, factoryNode.currentPos, vehicleRunner,
-                                      pathHashKey);
-                infoPanel.AddMessage(ERROR_MSG_LABEL_1, "Valid Linking", GREEN);
-                infoPanel.AddMessage(ERROR_MSG_LABEL_2, "Valid Path Selection", GREEN);
-            } else {
-                infoPanel.AddMessage(ERROR_MSG_LABEL_2, "Not enough road!", RED);
+            // Link Result
+            isErrorCorrect = LinkedPathFormulation(gridPrimitive, houseNode.currentPos, factoryNode.currentPos, vehicleRunner,
+                                  pathHashKey);
+            // Toggle/Handle Node State If Successful
+            if(isErrorCorrect)
+            {
+                gridPrimitive.ResetNodes(PREV_DRAGGED_CELLS, false);
             }
         }
-        else
+
+        if(!isErrorCorrect)
         {
-            gridPrimitive.ResetNodes(PREV_DRAGGED_CELLS);
+            gridPrimitive.ResetNodes(PREV_DRAGGED_CELLS, true);
             infoPanel.AddMessage(ERROR_MSG_LABEL_1, "InValid Linking", RED);
-            infoPanel.AddMessage(ERROR_MSG_LABEL_2, "Invalid Path Selection", RED);
         }
-
-        infoPanel.AddMessage(ERROR_MSG_LABEL_2, "Invalid Path Selection", RED);
-
-        cout << "Dragged Status:\t" << isValidDrag << "\n";
 
         PREV_DRAGGED_CELLS.clear();
         CURRENT_CLICKED_CELL = vec2((NROWS + NCOLS), (NROWS + NCOLS));
@@ -306,17 +306,22 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
 
 
 bool ClickedCellHandled(int col, int row) {
+    cout << "Click Location: " << col << "\t" << row << "\n";
+    if (col >= NCOLS || row >= NROWS) {
+        // Assuming Out of Bounds
+        return true;
+    }
     for (const vec2 &cell: PREV_DRAGGED_CELLS) {
         if (cell.x == floor(col) && cell.y == floor(row)) {
             return true;
         }
     }
+
     return false;
 }
 
 bool AccumulateDraggedCell(float xMouse, float yMouse) {
     int col = (int) ((xMouse - X_POS) / DX), row = (int) ((yMouse - Y_POS) / DY);
-
     if (!ClickedCellHandled(col, row)) {
 
         CURRENT_CLICKED_CELL = vec2(col, row);
