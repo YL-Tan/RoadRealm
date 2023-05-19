@@ -386,9 +386,6 @@ void MouseButton(float xmouse, float ymouse, bool left, bool down) {
             application = STARTING_MENU;
             ACTIVE_GAME_RESET = true;
             infoPanel.AddMessage(LOGS_MSG_LABEL_2, "", YELLOW);
-
-            // Needs to remove, we need to set up a game_ending_state
-            checkAndSaveBestRecord(gameClock);
         } else if (application == STARTING_MENU && myStartButton.Hit(xmouse, ymouse)) {
             GAME_OVER = false;
             application = GAME_STATE;
@@ -494,7 +491,10 @@ void Display(GridPrimitive gridPrimitive) {
         if (GLOBAL_DRAW_BORDERS) {
             DrawBorders();
         }
-        infoPanel.AddMessage(COUNTDOWN, "Countdown: " + to_string(countDown), WHITE);
+        stringstream stream;
+        stream << fixed << setprecision(3) << countDown;
+        string countDownFormatted = stream.str();
+        infoPanel.AddMessage(COUNTDOWN, "Countdown: " + countDownFormatted + "S", WHITE);
     }
 
     infoPanel.InfoDisplay(FONT_SCALE);
