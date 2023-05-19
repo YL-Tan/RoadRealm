@@ -238,8 +238,8 @@ bool AreValidDraggedCells(GridPrimitive &gridPrimitive, Node &houseNode, Node &f
         if (rowDiff > 1 || colDiff > 1 || !partOfCross) {
             return false;
         }
-        // Check if Closed Node
-        if (i > 0 && gridPrimitive.IsAClosedNodeState(prevCell)) {
+        // Check if Closed Node State
+        if (i > 0 && gridPrimitive.IsAClosedNodeState(prevCell, true)) {
             return false;
         }
 

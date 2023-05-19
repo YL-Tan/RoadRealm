@@ -138,14 +138,14 @@ public:
 
     Node NodeHandler(int nodeIndex) {
         Node *node = &gridNodes.at(nodeIndex);
-        if (node->currentState == OPEN) {
+        if (node->currentState == OPEN && globalState == DRAW_STATE) {
             // Node State Changes, Swap/Toggled
             node->currentState = node->transState;
             node->transState = CLOSED_ROAD;
             node->color = ORANGE;
             return *node;
         }
-        if (node->currentState == CLOSED_ROAD) {
+        if (node->currentState == CLOSED_ROAD && globalState == WIPE_STATE) {
             // Node State Changes, Swap/Toggled
             node->currentState = node->transState;
             node->transState = OPEN;
