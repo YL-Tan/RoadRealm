@@ -152,12 +152,20 @@ void DrawBorders() {
     Line(vec2(5, 5), vec2(GLOBAL_W, 5), 1, WHITE);
 }
 
-bool IsInGrid(int row, int col) {
-    if ((row >= NROWS || row < 0) || ((col >= NCOLS) || (col < 0))) {
-        return false;
+bool IsWithInBounds(int row, int col) {
+    if((col < NCOLS && row < NROWS) && (col > -1 && row > -1))
+    {
+        return true;
     }
-    return true;
+    return false;
 }
+
+bool IsWithInBounds(const vec2& point)
+{
+    return IsWithInBounds(point.x, point.y);
+}
+
+
 
 /*vector<vec2> FindNeighbors(vec2 startingPoint, int dist)
 {

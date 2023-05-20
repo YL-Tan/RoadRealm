@@ -155,27 +155,6 @@ void Update(GridPrimitive &gridPrimitive) {
     infoPanel.AddMessage(FPS_LABEL, to_string(FRAMES_PER_SECONDS), WHITE);
 }
 
-Node ToggleNodeState(int col, int row, GridPrimitive &gridPrimitive, vector<NodePosition> &path, string &pathKey) {
-    if (col < NCOLS && row < NROWS && col > -1 && row > -1) {
-
-        int potentialIndex = CombineDigits(row, col);
-
-        Node node = gridPrimitive.NodeHandler(potentialIndex);
-
-        path.push_back(node.currentPos);
-
-        pathKey += to_string(node.currentPos.row) + to_string(node.currentPos.col);
-
-        infoPanel.AddMessage(MOUSE_CLICK_LABEL, "Mouse Click: X" + to_string(col) + " Y " + to_string(row), WHITE);
-        infoPanel.AddMessage(ERROR_MSG_LABEL_1, "Success", GREEN);
-
-        return node;
-    } else {
-        infoPanel.AddMessage(ERROR_MSG_LABEL_2, "Out Of Grid Mouse Click", RED);
-    }
-    return {};
-}
-
 bool LinkedPathFormulation(GridPrimitive &gridPrimitive, NodePosition homePos, NodePosition factoryPos,
                            const Vehicle &vehicleRunner, const string &pathHashKey) {
     bool updateLinkStatus = false;
@@ -308,6 +287,7 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
 bool ClickedCellHandled(int col, int row) {
     cout << "Click Location: " << col << "\t" << row << "\n";
     if (col >= NCOLS || row >= NROWS) {
+        infoPanel.AddMessage(ERROR_MSG_LABEL_2, "Out Of Grid Mouse Click", RED);
         // Assuming Out of Bounds
         return true;
     }
