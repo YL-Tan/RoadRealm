@@ -296,18 +296,14 @@ bool ClickedCellHandled(int col, int row) {
             return true;
         }
     }
-
     return false;
 }
 
 bool AccumulateDraggedCell(float xMouse, float yMouse) {
     int col = (int) ((xMouse - X_POS) / DX), row = (int) ((yMouse - Y_POS) / DY);
     if (!ClickedCellHandled(col, row)) {
-
         CURRENT_CLICKED_CELL = vec2(col, row);
-
         PREV_DRAGGED_CELLS.push_back(CURRENT_CLICKED_CELL);
-
         return true;
     }
     return false;

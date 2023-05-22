@@ -167,7 +167,7 @@ bool IsWithInBounds(const vec2& point)
 
 
 
-/*vector<vec2> FindNeighbors(vec2 startingPoint, int dist)
+vector<vec2> FindNeighbors(vec2 startingPoint, int dist)
 {
     vector<vec2> potentialLocations;
     for (int i = (int) startingPoint.y - dist; i <= (int) startingPoint.y + dist; i++)
@@ -176,20 +176,22 @@ bool IsWithInBounds(const vec2& point)
         {
             if (!(i == (int) startingPoint. y && j == (int) startingPoint.x))
             {
-                if (IsInGrid(i, j))
+                if (IsWithInBounds(i, j))
                     potentialLocations.emplace_back(j,i);
             }
         }
     }
     return potentialLocations;
-}*/
+}
 
+/*
 int GetDistance(const vec2 &firstPoint, const vec2 &secondPoint) {
     int xAxisDist = pow((secondPoint.x - firstPoint.x), 2);
     int yAxisDist = pow((secondPoint.y - firstPoint.y), 2);
 
     return sqrt(xAxisDist + yAxisDist);
 }
+*/
 
 void GetRandomDistribution(int distribLimit, int numOfRndValues, vector<int> &distribRndPlacement) {
     random_device generator;
@@ -200,10 +202,15 @@ void GetRandomDistribution(int distribLimit, int numOfRndValues, vector<int> &di
     }
 }
 
-vec2 GetRandomPoint(int numOfRndValues = 2, int radiusLimit = 0, const vec2 &originPoint = {}) {
+vec2 GetRandomPoint(int numOfRndValues = 5, int radiusLimit = 0,const vec2 &originPoint = {}) {
     vector<int> rndNodePoint = {};
     GetRandomDistribution(NROWS, numOfRndValues, rndNodePoint);
-
+    if (radiusLimit > 0) {
+        vector <vec2> potentialValues = FindNeighbors(originPoint, radiusLimit);
+        return potentialValues.at(rand() % potentialValues.size());
+    }
+    return {(rndNodePoint.at(0) % NCOLS), (rndNodePoint.at(1) % NROWS)};
+/*
     if (radiusLimit > 0) {
         vec2 potentialPt(-1, -1), currentPt;
         int curRadiusDiff = 0, prevRadiusDiff = 0;
@@ -230,6 +237,7 @@ vec2 GetRandomPoint(int numOfRndValues = 2, int radiusLimit = 0, const vec2 &ori
         return potentialPt;
     }
     return {(rndNodePoint.at(0) % NCOLS), (rndNodePoint.at(1) % NROWS)};
+*/
 }
 
 vec3 GetRandomColor(int stride = 1) {
