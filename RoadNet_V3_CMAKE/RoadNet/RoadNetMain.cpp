@@ -47,6 +47,7 @@ time_t oldtime = clock();
 chrono::duration<double> gameClock;
 int currNumRoads = 20;
 double lastReplenishTime = 0.0;
+double lastPairSpawnTime = 0.0;
 float countDown = 5.0f;
 float bufferTime = 5.0f;
 string status = "Draw";
@@ -110,17 +111,34 @@ void replenishRoads() {
     }
 }
 
+void spawnPair(int interval, GridPrimitive& gridPrimitive, int radius = 2) {
+    if(gameClock.count() - lastPairSpawnTime >= interval){
+        vec2 rndStPoint = GetRandomPoint();
+        vec2 rndEdPoint = GetRandomPoint(5, radius, rndStPoint);
+        cout << "Pt1: " << rndStPoint.y << "\t" << rndStPoint.x << "\t Pt2: " << rndEdPoint.y << "\t"
+             << rndEdPoint.x << "\n";
+        gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
+                                      (int) rndEdPoint.x);
+
+
+        lastPairSpawnTime = gameClock.count();
+    }
+}
+
 void Update(GridPrimitive &gridPrimitive) {
 
     time_t now = clock();
-    float dt = (float) (now - oldtime) / CLOCKS_PER_SEC;
+    float dt;
 
     if (application == GAME_STATE && !GLOBAL_PAUSE) {
         dt = (float) (now - oldtime) / CLOCKS_PER_SEC;
+
+
         oldtime = now;
         for (auto &runnerLinkers: ROAD_RUNNERS) {
             runnerLinkers.second.vehicleRunner.Update(dt);
         }
+
         gameClock += chrono::duration<double>(dt);
 
         if (!gridPrimitive.IsAllDestinationLinked()) {
@@ -141,6 +159,7 @@ void Update(GridPrimitive &gridPrimitive) {
             countDown = 5.0f;  // reset countdown if all destinations are linked
             bufferTime = 5.0f;
         }
+        spawnPair(5, gridPrimitive, 3);
         replenishRoads();
     } else {
         oldtime = now;
@@ -330,6 +349,7 @@ void ResetGameState(GridPrimitive &gridPrimitive) {
 
         currNumRoads = 20;
         lastReplenishTime = 0.0;
+        lastPairSpawnTime = 0.0;
         countDown = 5.0f;
         bufferTime = 5.0f;
         status = "Draw";
@@ -342,14 +362,14 @@ void ResetGameState(GridPrimitive &gridPrimitive) {
         ROAD_RUNNERS.clear();
         gridPrimitive.GridReset();
 
-        for (int i = 0; i < 5; i++) {
+        /*for (int i = 0; i < 5; i++) {
             vec2 rndStPoint = GetRandomPoint();
             vec2 rndEdPoint = GetRandomPoint(5, 3, rndStPoint);
             cout << "Pt1: " << rndStPoint.y << "\t" << rndStPoint.x << "\t Pt2: " << rndEdPoint.y << "\t"
                  << rndEdPoint.x << "\n";
             gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
                                           (int) rndEdPoint.x);
-        }
+        }*/
     }
 
     ACTIVE_GAME_RESET = false;
