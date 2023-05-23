@@ -13,8 +13,8 @@
 
 using namespace std;
 
-#define NROWS 40
-#define NCOLS 40
+#define NROWS 12
+#define NCOLS 12
 #define H_EDGE_BUFFER 40
 #define W_EDGE_BUFFER 100
 #define INFO_MSG_SIZE 12
@@ -58,7 +58,7 @@ const vec3 WHITE(1, 1, 1), BLACK(0, 0, 0), GREY(.5, .5, .5), RED(1, 0, 0),
         ORANGE(1, .55f, 0), PURPLE(.8f, .1f, .5f), CYAN(0, 1, 1), PALE_GREY(.8, .8, .8);
 
 GameplayState globalState = DRAW_STATE;
-bool REDUCE_DIAMETER = true, REVERT_STATE = false;
+bool REDUCE_DIAMETER = true;
 
 struct InfoPanel {
 
@@ -346,12 +346,36 @@ float GetCirDiam(bool animateDraw) {
     return MAX_DIAMETER_SIZE;
 }
 
+string PrintNodeState(NodeStates nodeStates)
+{
+    if(nodeStates == CLOSED_ROAD)
+    {
+        return  "CLOSED_ROAD";
+    }
+    if(nodeStates == CLOSED_HOUSE)
+    {
+        return  "CLOSED_HOUSE";
+    }
+    if(nodeStates == CLOSED_FACTORY)
+    {
+        return "CLOSED_FACTORY";
+    }
+    if(nodeStates == POTENTIAL_ROAD)
+    {
+        return "POTENTIAL_ROAD";
+    }
+    return "OPEN";
+}
+
 struct Node {
     NodePosition currentPos;
+
     vec3 color = WHITE;
     vec3 overlayColor = WHITE;
+
     NodeStates currentState = OPEN;
     NodeStates transState = POTENTIAL_ROAD;
+    NodeStates prevState = OPEN;
 
     bool isConnected = false;
 
@@ -365,8 +389,10 @@ struct Node {
     void NodeReset() {
         this->color = WHITE;
         this->overlayColor = WHITE;
+
         this->currentState = OPEN;
         this->transState = POTENTIAL_ROAD;
+        this->prevState = OPEN;
     }
 };
 

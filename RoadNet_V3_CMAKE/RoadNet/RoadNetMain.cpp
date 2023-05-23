@@ -287,12 +287,14 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
             // Toggle/Handle Node State If Successful
             if(isErrorCorrect)
             {
+                cout << "Is Correct Linking\n";
                 gridPrimitive.ResetNodes(PREV_DRAGGED_CELLS, false);
             }
         }
 
         if(!isErrorCorrect)
         {
+            cout << "Is Not Correct Dragging Linking\n";
             gridPrimitive.ResetNodes(PREV_DRAGGED_CELLS, true);
             infoPanel.AddMessage(ERROR_MSG_LABEL_1, "InValid Linking", RED);
         }
@@ -311,7 +313,6 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
 
 
 bool ClickedCellHandled(int col, int row) {
-    cout << "Click Location: " << col << "\t" << row << "\n";
     if (col >= NCOLS || row >= NROWS) {
         infoPanel.AddMessage(ERROR_MSG_LABEL_2, "Out Of Grid Mouse Click", RED);
         // Assuming Out of Bounds

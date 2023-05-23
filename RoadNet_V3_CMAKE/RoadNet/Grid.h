@@ -16,6 +16,7 @@ class GridPrimitive {
 private:
     vec3 nodesDefaultColor = WHITE;
     vector<DestinationObjectives> gridDestObjectives;
+    bool revertState = false;
 
     void FormulateGrid() {
         for (int row = 0; row < NROWS; row++) {
@@ -42,6 +43,47 @@ private:
             if (isHouseDuplicate || isFactDuplicate) {
                 return true;
             }
+        }
+        return false;
+    }
+    bool NodeStatesHandler(Node *node)
+    {
+        if (node->currentState == OPEN && globalState == DRAW_STATE) {
+            // Node State Changes, Swap/Toggled
+            node->currentState = node->transState;
+            //node->prevState = OPEN;
+            node->transState = CLOSED_ROAD;
+            node->color = ORANGE;
+            return true;
+        }
+        if (node->currentState == CLOSED_ROAD && globalState == WIPE_STATE) {
+            // Node State Changes, Swap/Toggled
+            node->currentState = node->transState;
+            //node->prevState = CLOSED_ROAD;
+            node->transState = OPEN;
+            node->color = ORANGE;
+            return true;
+        }
+        if (node->currentState == POTENTIAL_ROAD) {
+            // Move to TransState
+            node->currentState = node->transState;
+
+            if (this->revertState) {
+                // Move to PrevState
+                node->currentState = node->prevState;
+            }
+
+            node->transState = POTENTIAL_ROAD;
+
+            if (node->currentState == CLOSED_ROAD) {
+                node->color = GREY;
+                node->prevState = CLOSED_ROAD;
+            }
+            if (node->currentState == OPEN) {
+                node->color = WHITE;
+                node->prevState = OPEN;
+            }
+            return true;
         }
         return false;
     }
@@ -86,6 +128,9 @@ public:
                     // House = Start, Factory = End
                     gridNodes.at(startNIndex).currentState = CLOSED_HOUSE;
                     gridNodes.at(endNIndex).currentState = CLOSED_FACTORY;
+
+                    gridNodes.at(startNIndex).color = WHITE;
+                    gridNodes.at(endNIndex).color = WHITE;
 
                     vec3 shrRandColor = GetRandomColor();
 
@@ -138,41 +183,13 @@ public:
 
     Node NodeHandler(int nodeIndex) {
         Node *node = &gridNodes.at(nodeIndex);
-        if (node->currentState == OPEN && globalState == DRAW_STATE) {
-            // Node State Changes, Swap/Toggled
-            node->currentState = node->transState;
-            node->transState = CLOSED_ROAD;
-            node->color = ORANGE;
-            return *node;
-        }
-        if (node->currentState == CLOSED_ROAD && globalState == WIPE_STATE) {
-            // Node State Changes, Swap/Toggled
-            node->currentState = node->transState;
-            node->transState = OPEN;
-            node->color = ORANGE;
-            return *node;
-        }
-        if (node->currentState == POTENTIAL_ROAD) {
-            if (REVERT_STATE) {
-                if (node->transState == OPEN) {
-                    node->currentState = CLOSED_ROAD;
-                }
-                if (node->transState == CLOSED_ROAD) {
-                    node->currentState = OPEN;
-                }
-            } else {
-                node->currentState = node->transState;
-            }
-            node->transState = POTENTIAL_ROAD;
+        if(this->revertState && !IsAClosedNodeState(*node, true))
+        {
+            cout << "\tCR-State: " << PrintNodeState(node->currentState) << "\tPR-State" << PrintNodeState(node->prevState) << "\tTR-State" <<  PrintNodeState(node->transState) << "\n";
 
-            if (node->currentState == CLOSED_ROAD) {
-                node->color = GREY;
-            }
-            if (node->currentState == OPEN) {
-                node->color = WHITE;
-            }
-            return *node;
+            node->currentState = POTENTIAL_ROAD;
         }
+        NodeStatesHandler(node);
         return *node;
     }
 
@@ -202,12 +219,12 @@ public:
     }
 
     void ResetNodes(vector<vec2> gridAxisPoints, bool enableReset) {
-        REVERT_STATE = enableReset;
+        this->revertState = enableReset;
         for (vec2 &pt: gridAxisPoints) {
             int mapToIndex = CombineDigits((int) pt.y, (int) pt.x);
             NodeHandler(mapToIndex);
         }
-        REVERT_STATE = false;
+        this->revertState = false;
     }
 
     void GridReset() {
