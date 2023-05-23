@@ -13,8 +13,8 @@
 
 using namespace std;
 
-#define NROWS 12
-#define NCOLS 10
+#define NROWS 32
+#define NCOLS 32
 #define H_EDGE_BUFFER 40
 #define W_EDGE_BUFFER 100
 #define INFO_MSG_SIZE 12
@@ -166,17 +166,24 @@ bool IsWithInBounds(const vec2& point)
 }
 
 
+int GetDistance(const vec2 &firstPoint, const vec2 &secondPoint) {
+    int xAxisDist = (int) abs((secondPoint.x - firstPoint.x));
+    int yAxisDist = (int) abs((secondPoint.y - firstPoint.y));
+
+    return xAxisDist + yAxisDist;
+}
 
 vector<vec2> FindNeighbors(vec2 startingPoint, int dist)
 {
     vector<vec2> potentialLocations;
     for (int i = (int) startingPoint.y - dist; i <= (int) startingPoint.y + dist; i++)
     {
+
         for (int j = (int) startingPoint.x - dist; j <= (int) startingPoint.x + dist; j++)
         {
-            if (!(i == (int) startingPoint. y && j == (int) startingPoint.x))
+            if ((!(i == (int) startingPoint. y && j == (int) startingPoint.x)))
             {
-                if (IsWithInBounds(i, j))
+                if (IsWithInBounds(i, j) && GetDistance(vec2(j,i), startingPoint) > 2)
                     potentialLocations.emplace_back(j,i);
             }
         }
@@ -184,14 +191,7 @@ vector<vec2> FindNeighbors(vec2 startingPoint, int dist)
     return potentialLocations;
 }
 
-/*
-int GetDistance(const vec2 &firstPoint, const vec2 &secondPoint) {
-    int xAxisDist = pow((secondPoint.x - firstPoint.x), 2);
-    int yAxisDist = pow((secondPoint.y - firstPoint.y), 2);
 
-    return sqrt(xAxisDist + yAxisDist);
-}
-*/
 
 void GetRandomDistribution(int distribLimit, int numOfRndValues, vector<int> &distribRndPlacement) {
     random_device generator;
@@ -206,7 +206,12 @@ vec2 GetRandomPoint(int numOfRndValues = 5, int radiusLimit = 0,const vec2 &orig
     vector<int> rndNodePoint = {};
     GetRandomDistribution(NROWS, numOfRndValues, rndNodePoint);
     if (radiusLimit > 0) {
-        vector <vec2> potentialValues = FindNeighbors(originPoint, radiusLimit);
+
+        vector <vec2> potentialValues = {};
+        while (potentialValues.empty())
+        {
+            potentialValues = FindNeighbors(originPoint, radiusLimit);
+        }
         return potentialValues.at(rand() % potentialValues.size());
     }
     return {(rndNodePoint.at(0) % NCOLS), (rndNodePoint.at(1) % NROWS)};

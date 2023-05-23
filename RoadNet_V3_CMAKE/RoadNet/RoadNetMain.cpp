@@ -159,7 +159,8 @@ void Update(GridPrimitive &gridPrimitive) {
             countDown = 5.0f;  // reset countdown if all destinations are linked
             bufferTime = 5.0f;
         }
-        spawnPair(5, gridPrimitive, 3);
+        int radius = ((((int)gameClock.count() % 3600) / 60) + 1) * 2;
+        spawnPair(5, gridPrimitive, radius);
         replenishRoads();
     } else {
         oldtime = now;
