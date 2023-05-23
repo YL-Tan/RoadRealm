@@ -113,8 +113,14 @@ void replenishRoads() {
 
 void spawnPair(int interval, GridPrimitive& gridPrimitive, int radius = 2) {
     if(gameClock.count() - lastPairSpawnTime >= interval){
-        vec2 rndStPoint = GetRandomPoint();
-        vec2 rndEdPoint = GetRandomPoint(5, radius, rndStPoint);
+        vec2 rndStPoint;
+        vec2 rndEdPoint;
+
+        do {
+            rndStPoint = GetRandomPoint();
+            rndEdPoint = GetRandomPoint(5, radius, rndStPoint);
+        }while(gridPrimitive.IsAClosedNodeState(rndStPoint, true) || gridPrimitive.IsAClosedNodeState(rndEdPoint, true)) ;
+
         cout << "Pt1: " << rndStPoint.y << "\t" << rndStPoint.x << "\t Pt2: " << rndEdPoint.y << "\t"
              << rndEdPoint.x << "\n";
         gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,

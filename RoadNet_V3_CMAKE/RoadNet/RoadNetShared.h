@@ -13,8 +13,8 @@
 
 using namespace std;
 
-#define NROWS 32
-#define NCOLS 32
+#define NROWS 40
+#define NCOLS 40
 #define H_EDGE_BUFFER 40
 #define W_EDGE_BUFFER 100
 #define INFO_MSG_SIZE 12
