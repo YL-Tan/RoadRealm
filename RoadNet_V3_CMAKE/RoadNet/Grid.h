@@ -242,6 +242,20 @@ public:
         }
         return true;
     }
+
+    void GridClearRoads() {
+        for (Node& cell : gridNodes) {
+            if (!IsAClosedNodeState(cell)) {
+                cell.NodeReset();
+            }
+            cell.isConnected = false;
+        }
+        for (DestinationObjectives& objectives : gridDestObjectives) {
+            if (objectives.destLinked) {
+                objectives.destLinked == false;
+            }
+        }
+    }
 };
 
 #endif //ROADREALM_ASTAR_H

@@ -21,12 +21,14 @@
 #include <sstream>
 #include <fstream>
 #include "Sprite.h"
-
+#include <windows.h>
+#include <mmsystem.h>
+#pragma comment(lib, "winmm.lib")
 using namespace std;
 
 unsigned int NUM_OF_FRAMES = 0;
 double INIT_FPS_TIME = 0;
-bool GLOBAL_MOUSE_DOWN = false, GLOBAL_PAUSE = false, GLOBAL_DRAW_BORDERS = false, ACTIVE_GAME_RESET = false, GAME_OVER = false;
+bool GLOBAL_MOUSE_DOWN = false, GLOBAL_PAUSE = false, GLOBAL_DRAW_BORDERS = false, ACTIVE_GAME_RESET = false, GAME_OVER = false, CLEAR_ROADS = false;
 // In Seconds
 double REPLENISH_INTERVAL = 10.0, FRAMES_PER_SECONDS = 0;
 int REPLENISH_ROADS_NUM = 20;
@@ -39,7 +41,7 @@ vector<vec2> PREV_DRAGGED_CELLS;
 
 InfoPanel infoPanel;
 ApplicationStates application = STARTING_MENU;
-Sprite myResetButton, myExitButton, myStartButton, myQuitButton, backGround, myPauseButton, myResumeButton;
+Sprite myResetButton, myExitButton, myStartButton, myQuitButton, backGround, myPauseButton, myResumeButton, myClearButton;
 
 GLFWwindow *w = InitGLFW(100, 100, APP_WIDTH, APP_HEIGHT, "RoadRealm");
 
@@ -122,7 +124,10 @@ void spawnPair(int interval, GridPrimitive& gridPrimitive, int radius = 2) {
         }while(gridPrimitive.IsAClosedNodeState(rndStPoint, true) || gridPrimitive.IsAClosedNodeState(rndEdPoint, true)) ;
 
         cout << "Pt1: " << rndStPoint.y << "\t" << rndStPoint.x << "\t Pt2: " << rndEdPoint.y << "\t"
-             << rndEdPoint.x << "\n";
+            << rndEdPoint.x << "\n";
+        if (application == GAME_STATE) {
+            PlaySound(TEXT("RoadNet/Sounds/chime.wav"), NULL, SND_FILENAME | SND_ASYNC);
+        }
         gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
                                       (int) rndEdPoint.x);
 
@@ -153,6 +158,7 @@ void Update(GridPrimitive &gridPrimitive) {
             } else {
                 countDown -= dt;
                 if (countDown <= 0.0f) {
+                    PlaySound(TEXT("RoadNet/Sounds/game_over.wav"), NULL, SND_FILENAME | SND_ASYNC);
                     checkAndSaveBestRecord(gameClock);
                     GAME_OVER = true;
                     ACTIVE_GAME_RESET = true;
@@ -292,8 +298,9 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
             }
         }
 
-        if(!isErrorCorrect)
+        if (!isErrorCorrect)
         {
+            PlaySound(TEXT("RoadNet/Sounds/error.wav"), NULL, SND_FILENAME | SND_ASYNC);
             cout << "Is Not Correct Dragging Linking\n";
             gridPrimitive.ResetNodes(PREV_DRAGGED_CELLS, true);
             infoPanel.AddMessage(ERROR_MSG_LABEL_1, "InValid Linking", RED);
@@ -379,12 +386,18 @@ void ResetGameState(GridPrimitive &gridPrimitive) {
                                           (int) rndEdPoint.x);
         }*/
     }
-
+    if (CLEAR_ROADS) {
+        ROAD_RUNNERS.clear();
+        gridPrimitive.GridClearRoads();
+        
+    }
+    CLEAR_ROADS = false;
     ACTIVE_GAME_RESET = false;
 }
 
 void MouseButton(float xmouse, float ymouse, bool left, bool down) {
     if (down) {
+        PlaySound(TEXT("RoadNet/Sounds/click_x.wav"), NULL, SND_FILENAME | SND_ASYNC);
         GLOBAL_MOUSE_DOWN = true;
 
         if (application == GAME_STATE && myResetButton.Hit(xmouse, ymouse)) {
@@ -395,6 +408,10 @@ void MouseButton(float xmouse, float ymouse, bool left, bool down) {
             application = STARTING_MENU;
             ACTIVE_GAME_RESET = true;
             infoPanel.AddMessage(LOGS_MSG_LABEL_2, "", YELLOW);
+        }
+        else if (application == GAME_STATE && myClearButton.Hit(xmouse, ymouse)) {
+            CLEAR_ROADS = true;
+            
         } else if (application == STARTING_MENU && myStartButton.Hit(xmouse, ymouse)) {
             GAME_OVER = false;
             application = GAME_STATE;
@@ -422,12 +439,15 @@ void KeyButton(int key, bool down, bool shift, bool control) {
     if (down == GLFW_PRESS) {
         switch (key) {
             case GLFW_KEY_P:
+                PlaySound(TEXT("RoadNet/Sounds/click_x.wav"), NULL, SND_FILENAME | SND_ASYNC);
                 GLOBAL_PAUSE = !GLOBAL_PAUSE;
                 break;
             case GLFW_KEY_SPACE:
+                PlaySound(TEXT("RoadNet/Sounds/click_x.wav"), NULL, SND_FILENAME | SND_ASYNC);
                 GLOBAL_PAUSE = !GLOBAL_PAUSE;
                 break;
             case GLFW_KEY_D:
+                PlaySound(TEXT("RoadNet/Sounds/click_x.wav"), NULL, SND_FILENAME | SND_ASYNC);
                 if (globalState == WIPE_STATE) {
                     globalState = DRAW_STATE;
                     status = "Draw";
@@ -437,10 +457,12 @@ void KeyButton(int key, bool down, bool shift, bool control) {
                 }
                 break;
             case GLFW_KEY_W:
+                PlaySound(TEXT("RoadNet/Sounds/click_x.wav"), NULL, SND_FILENAME | SND_ASYNC);
                 globalState = WIPE_STATE;
                 status = "Delete";
                 break;
             case GLFW_KEY_B:
+                PlaySound(TEXT("RoadNet/Sounds/click_x.wav"), NULL, SND_FILENAME | SND_ASYNC);
                 GLOBAL_DRAW_BORDERS = !GLOBAL_DRAW_BORDERS;
                 break;
         }
@@ -480,9 +502,13 @@ void Display(GridPrimitive gridPrimitive) {
         }
     }
     if (application == GAME_STATE) {
+        if (gameClock.count() < 0.05) {
+            PlaySound(TEXT("RoadNet/Sounds/call_to_arms.wav"), NULL, SND_FILENAME | SND_ASYNC);
+        }
         FONT_SCALE = 12.0f;
         myResetButton.Display();
         myExitButton.Display();
+        myClearButton.Display();
         if (GLOBAL_PAUSE) {
             myPauseButton.Display();
         } else {
@@ -537,6 +563,7 @@ int main(int ac, char **av) {
     backGround.Initialize("RoadNet/Images/background.jpg");
     myPauseButton.Initialize("RoadNet/Images/pauseButton.png");
     myResumeButton.Initialize("RoadNet/Images/resumeButton.png");
+    myClearButton.Initialize("RoadNet/Images/clearButton.png");
 
     RegisterMouseButton(MouseButton);
     RegisterMouseMove(MouseMove);
@@ -562,10 +589,12 @@ int main(int ac, char **av) {
     myResumeButton.SetScale(vec2(.1f, .1f));
     myResumeButton.SetPosition(vec2(.66f, -.25f));
 
+    myClearButton.SetScale(vec2(.1f, .1f));
+    myClearButton.SetPosition(vec2(.7f, 0.0f));
+
     INIT_FPS_TIME = glfwGetTime();
-
+    PlaySound(TEXT("RoadNet/Sounds/program_start.wav"), NULL, SND_FILENAME | SND_ASYNC);
     GridPrimitive gridPrimitive;
-
     while (!glfwWindowShouldClose(w)) {
         Update(gridPrimitive);
 
