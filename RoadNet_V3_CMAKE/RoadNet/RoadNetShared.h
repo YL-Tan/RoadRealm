@@ -38,12 +38,12 @@ enum InfoLabelsIndex {
     FPS_LABEL = 3,
     TIME_LABEL = 4,
     NUM_OF_ROAD_LABEL = 5,
-    GRID_STATE_LABEL = 6,
-    ERROR_MSG_LABEL_1 = 7,
-    ERROR_MSG_LABEL_2 = 8,
-    LOGS_MSG_LABEL_1 = 9,
-    LOGS_MSG_LABEL_2 = 10,
-    COUNTDOWN = 11
+    APPLICATION_STATE_LABEL = 6,
+    GAMEPLAY_STATE_LABEL = 7,
+    ERROR_MSG_LABEL = 8,
+    RUNNERS_COUNT_LABEL = 9,
+    COUNTDOWN = 10,
+    EVT_MSG_LABEL = 11
 };
 
 int APP_WIDTH = 1000, APP_HEIGHT = 800, X_POS = 20, Y_POS = 20,
@@ -57,11 +57,13 @@ const vec3 WHITE(1, 1, 1), BLACK(0, 0, 0), GREY(.5, .5, .5), RED(1, 0, 0),
         GREEN(0, 1, 0), BLUE(0, 0, 1), YELLOW(1, 1, 0),
         ORANGE(1, .55f, 0), PURPLE(.8f, .1f, .5f), CYAN(0, 1, 1), PALE_GREY(.8, .8, .8);
 
-GameplayState globalState = DRAW_STATE;
+GameplayState GLOBAL_GAMEPLAY_STATE = DRAW_STATE;
+ApplicationStates APPLICATION_STATE = STARTING_MENU;
+string GLOBAL_EVENT_LABEL;
 bool REDUCE_DIAMETER = true;
 
-struct InfoPanel {
-
+class InfoPanel {
+private:
     struct Message {
         string msgInfo = "";
         vec3 msgColor = WHITE;
@@ -72,29 +74,37 @@ struct InfoPanel {
         }
     };
 
-    vector<Message> infoPanelMessages = {};
+    vector<Message> generalMsgInfo = {};
 
+public:
     InfoPanel() {
         for (int i = 0; i < INFO_MSG_SIZE; i++) {
-            infoPanelMessages.push_back(Message("", WHITE));
+            generalMsgInfo.push_back(Message("", WHITE));
         }
     }
 
     void InfoDisplay(float fontScale) {
         int maxHeight = GLOBAL_H;
-        for (Message &message: infoPanelMessages) {
-            Text(DISP_W + 5, maxHeight, message.msgColor, fontScale, message.msgInfo.c_str());
+        if(APPLICATION_STATE != STARTING_MENU)
+        {
+            for (Message &message: generalMsgInfo) {
+                Text(DISP_W + 5, maxHeight, message.msgColor, fontScale, message.msgInfo.c_str());
 
-            maxHeight -= 20;
+                maxHeight -= 20;
+            }
+        }else
+        {
+            Text(DISP_W + 5, maxHeight, generalMsgInfo.at(FPS_LABEL).msgColor, fontScale, generalMsgInfo.at(FPS_LABEL).msgInfo.c_str());
+            Text(DISP_W + 5, maxHeight - 20, generalMsgInfo.at(APPLICATION_STATE_LABEL).msgColor, fontScale, generalMsgInfo.at(APPLICATION_STATE_LABEL).msgInfo.c_str());
         }
+
     }
 
     bool AddMessage(InfoLabelsIndex labelsIndex, const string &msg, const vec3 &msgColor) {
         if (!msg.empty()) {
             // Add Message To Vector
-            infoPanelMessages.at(labelsIndex).msgInfo = msg;
-            infoPanelMessages.at(labelsIndex).msgColor = msgColor;
-
+            generalMsgInfo.at(labelsIndex).msgInfo = msg;
+            generalMsgInfo.at(labelsIndex).msgColor = msgColor;
             return true;
         }
         return false;
@@ -215,34 +225,6 @@ vec2 GetRandomPoint(int numOfRndValues = 5, int radiusLimit = 0,const vec2 &orig
         return potentialValues.at(rndNodePoint.at(rand() % (rndNodePoint.size() - 1)) % potentialValues.size());
     }
     return {(rndNodePoint.at(0) % NCOLS), (rndNodePoint.at(1) % NROWS)};
-/*
-    if (radiusLimit > 0) {
-        vec2 potentialPt(-1, -1), currentPt;
-        int curRadiusDiff = 0, prevRadiusDiff = 0;
-        for (int i = 0; i < rndNodePoint.size() - 1; i++) {
-            currentPt.x = (rndNodePoint.at(i) % NCOLS);
-            currentPt.y = (rndNodePoint.at(i + 1) % NROWS);
-
-            int ptsDistance = GetDistance(currentPt, originPoint);
-
-            curRadiusDiff = abs(radiusLimit - ptsDistance);
-
-            if (curRadiusDiff >= prevRadiusDiff && curRadiusDiff <= radiusLimit) {
-                potentialPt = currentPt;
-                prevRadiusDiff = curRadiusDiff;
-            }
-            cout << currentPt.x << "\t" << currentPt.y << "\t" << ptsDistance << "\t" << curRadiusDiff << "\t"
-                 << prevRadiusDiff << "\n";
-
-        }
-        if (potentialPt.y == -1 || potentialPt.x == -1) {
-            cout << "All Points Above Set Radius Range";
-            return currentPt;
-        }
-        return potentialPt;
-    }
-    return {(rndNodePoint.at(0) % NCOLS), (rndNodePoint.at(1) % NROWS)};
-*/
 }
 
 vec3 GetRandomColor(int stride = 1) {
@@ -328,7 +310,6 @@ D GetMin(D digit1, D digit2) {
 float GetCirDiam(bool animateDraw) {
     if (animateDraw) {
         if ((REDUCE_DIAMETER && DIAMETER_PERCENT > MAX_DIAMETER_SIZE) || (!REDUCE_DIAMETER && DIAMETER_PERCENT < 0)) {
-            //    cout << "Hit: " << MAX_DIAMETER_SIZE << "\t" << diamPercent << "\t" << diameterLength << "\t" << decreaseRadius << "\n";
             REDUCE_DIAMETER = !REDUCE_DIAMETER;
         }
         if (REDUCE_DIAMETER) {
@@ -337,10 +318,7 @@ float GetCirDiam(bool animateDraw) {
         if (!REDUCE_DIAMETER) {
             DIAMETER_PERCENT = DIAMETER_PERCENT - ANIMATION_SPEED;
         }
-
         DIAMETER_LENGTH = MAX_DIAMETER_SIZE - DIAMETER_PERCENT;
-
-        // cout << " &&  Latency: " << MAX_DIAMETER_SIZE << "\t" << diamPercent << "\t" << diameterLength << "\t" << decreaseRadius << "\n";
         return DIAMETER_LENGTH;
     }
     return MAX_DIAMETER_SIZE;
@@ -365,6 +343,27 @@ string PrintNodeState(NodeStates nodeStates)
         return "POTENTIAL_ROAD";
     }
     return "OPEN";
+}
+string PrintGameplayState()
+{
+    if(GLOBAL_GAMEPLAY_STATE == WIPE_STATE)
+    {
+        return "WIPE_STATE";
+    }
+    return "DRAW STATE";
+}
+
+string PrintApplicationState()
+{
+/**
+ * GameplayState GAMEPLAY_STATE = DRAW_STATE;
+ApplicationStates APPLICATION_STATE = STARTING_MENU;
+ */
+ if(APPLICATION_STATE == STARTING_MENU)
+ {
+     return "STARTING_MENU";
+ }
+    return "GAME_STATE";
 }
 
 struct Node {

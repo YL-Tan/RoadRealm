@@ -48,7 +48,7 @@ private:
     }
     bool NodeStatesHandler(Node *node)
     {
-        if (node->currentState == OPEN && globalState == DRAW_STATE) {
+        if (node->currentState == OPEN && GLOBAL_GAMEPLAY_STATE == DRAW_STATE) {
             // Node State Changes, Swap/Toggled
             node->currentState = node->transState;
             //node->prevState = OPEN;
@@ -56,7 +56,7 @@ private:
             node->color = ORANGE;
             return true;
         }
-        if (node->currentState == CLOSED_ROAD && globalState == WIPE_STATE) {
+        if (node->currentState == CLOSED_ROAD && GLOBAL_GAMEPLAY_STATE == WIPE_STATE) {
             // Node State Changes, Swap/Toggled
             node->currentState = node->transState;
             //node->prevState = CLOSED_ROAD;

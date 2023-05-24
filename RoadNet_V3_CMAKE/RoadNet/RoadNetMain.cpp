@@ -42,7 +42,6 @@ vec2 CURRENT_CLICKED_CELL((NROWS + NCOLS), (NROWS + NCOLS));
 vector<vec2> PREV_DRAGGED_CELLS;
 
 InfoPanel infoPanel;
-ApplicationStates application = STARTING_MENU;
 Sprite myResetButton, myExitButton, myStartButton, myQuitButton, backGround, myPauseButton, myResumeButton, myClearButton;
 
 GLFWwindow *w = InitGLFW(100, 100, APP_WIDTH, APP_HEIGHT, "RoadRealm");
@@ -54,9 +53,6 @@ double lastReplenishTime = 0.0;
 double lastPairSpawnTime = 0.0;
 float countDown = 5.0f;
 float bufferTime = 5.0f;
-string status = "Draw";
-
-hash<string> STRING_HASH_FUN;
 
 map<string, RoadRunnerLinker> ROAD_RUNNERS;
 
@@ -127,12 +123,13 @@ void spawnPair(int interval, GridPrimitive& gridPrimitive, int radius = 2) {
 
         cout << "Pt1: " << rndStPoint.y << "\t" << rndStPoint.x << "\t Pt2: " << rndEdPoint.y << "\t"
             << rndEdPoint.x << "\n";
-        if (application == GAME_STATE) {
-            PlaySound(TEXT("RoadNet/Sounds/chime.wav"), NULL, SND_FILENAME | SND_ASYNC);
-        }
-        gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
+
+        bool addStatus = gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
                                       (int) rndEdPoint.x);
 
+        if (APPLICATION_STATE == GAME_STATE && addStatus) {
+            PlaySound(TEXT("RoadNet/Sounds/chime.wav"), NULL, SND_FILENAME | SND_ASYNC);
+        }
 
         lastPairSpawnTime = gameClock.count();
     }
@@ -143,7 +140,7 @@ void Update(GridPrimitive &gridPrimitive) {
     time_t now = clock();
     float dt;
 
-    if (application == GAME_STATE && !GLOBAL_PAUSE) {
+    if (APPLICATION_STATE == GAME_STATE && !GLOBAL_PAUSE) {
         dt = (float) (now - oldtime) / CLOCKS_PER_SEC;
 
 
@@ -166,7 +163,7 @@ void Update(GridPrimitive &gridPrimitive) {
                     ACTIVE_GAME_RESET = true;
                     countDown = 5.0f;
                     bufferTime = 5.0f;
-                    application = STARTING_MENU;
+                    APPLICATION_STATE = STARTING_MENU;
                 }
             }
         } else {
@@ -181,19 +178,22 @@ void Update(GridPrimitive &gridPrimitive) {
     }
 
     gridPrimitive.GridUpdate();
-
+    // EVENT_LABEL
     infoPanel.AddMessage(TIME_LABEL, "Time: " + formatDuration(gameClock), WHITE);
     infoPanel.AddMessage(DIMS_LABEL, "Grid DIM: (" + to_string(NROWS) + " by " + to_string(NCOLS) + ")", WHITE);
     infoPanel.AddMessage(NUM_OF_ROAD_LABEL, "Number of Roads: " + to_string(currNumRoads), WHITE);
-    infoPanel.AddMessage(GRID_STATE_LABEL, status, WHITE);
-    infoPanel.AddMessage(FPS_LABEL, to_string(FRAMES_PER_SECONDS), WHITE);
+    infoPanel.AddMessage(APPLICATION_STATE_LABEL, PrintApplicationState(), PURPLE);
+    infoPanel.AddMessage(GAMEPLAY_STATE_LABEL, PrintGameplayState(), PURPLE);
+    infoPanel.AddMessage(FPS_LABEL, ("FPS: " + to_string(FRAMES_PER_SECONDS)), WHITE);
+    infoPanel.AddMessage(RUNNERS_COUNT_LABEL, ("Total Runners: " + to_string(ROAD_RUNNERS.size())), YELLOW);
+    infoPanel.AddMessage(EVT_MSG_LABEL, GLOBAL_EVENT_LABEL, CYAN);
 }
 
 bool LinkedPathFormulation(GridPrimitive &gridPrimitive, NodePosition homePos, NodePosition factoryPos,
                            const Vehicle &vehicleRunner, const string &pathHashKey) {
     bool updateLinkStatus = false;
 
-    if (globalState == DRAW_STATE) {
+    if (GLOBAL_GAMEPLAY_STATE == DRAW_STATE) {
         updateLinkStatus = gridPrimitive.UpdateDestinationLink(homePos, factoryPos, true);
 
         if (updateLinkStatus) {
@@ -203,11 +203,11 @@ bool LinkedPathFormulation(GridPrimitive &gridPrimitive, NodePosition homePos, N
             ROAD_RUNNERS.insert({pathHashKey, runnerLinker});
             currNumRoads -= (int) PREV_DRAGGED_CELLS.size();
 
-            infoPanel.AddMessage(ERROR_MSG_LABEL_1, "Valid Linking", RED);
+            infoPanel.AddMessage(ERROR_MSG_LABEL, "Valid Linking", GREEN);
         }
     }
 
-    if (globalState == WIPE_STATE) {
+    if (GLOBAL_GAMEPLAY_STATE == WIPE_STATE) {
         auto findRunner = ROAD_RUNNERS.find(pathHashKey);
         if (findRunner != ROAD_RUNNERS.end()) {
             updateLinkStatus = gridPrimitive.UpdateDestinationLink(homePos, factoryPos, false);
@@ -216,7 +216,7 @@ bool LinkedPathFormulation(GridPrimitive &gridPrimitive, NodePosition homePos, N
                 ROAD_RUNNERS.erase(findRunner);
                 currNumRoads += (int) PREV_DRAGGED_CELLS.size() - 2;
 
-                infoPanel.AddMessage(ERROR_MSG_LABEL_1, "Valid Linking", RED);
+                infoPanel.AddMessage(ERROR_MSG_LABEL, "Valid Linking", GREEN);
             }
         }
     }
@@ -257,8 +257,8 @@ bool AreValidDraggedCells(GridPrimitive &gridPrimitive, Node &houseNode, Node &f
         if (i > 0 && gridPrimitive.IsAClosedNodeState(prevCell, true)) {
             return false;
         }
-        if ((int) PREV_DRAGGED_CELLS.size() > currNumRoads) {
-            infoPanel.AddMessage(ERROR_MSG_LABEL_2, "Not enough road!", RED);
+        if (((int) PREV_DRAGGED_CELLS.size() > currNumRoads) && GLOBAL_GAMEPLAY_STATE == DRAW_STATE)  {
+            infoPanel.AddMessage(ERROR_MSG_LABEL, "Not enough road!", RED);
             return false;
         }
         i += 1;
@@ -305,7 +305,7 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
             PlaySound(TEXT("RoadNet/Sounds/error.wav"), NULL, SND_FILENAME | SND_ASYNC);
             cout << "Is Not Correct Dragging Linking\n";
             gridPrimitive.ResetNodes(PREV_DRAGGED_CELLS, true);
-            infoPanel.AddMessage(ERROR_MSG_LABEL_1, "InValid Linking", RED);
+            infoPanel.AddMessage(ERROR_MSG_LABEL, "InValid Linking", RED);
         }
 
         PREV_DRAGGED_CELLS.clear();
@@ -323,7 +323,7 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
 
 bool ClickedCellHandled(int col, int row) {
     if (col >= NCOLS || row >= NROWS) {
-        infoPanel.AddMessage(ERROR_MSG_LABEL_2, "Out Of Grid Mouse Click", RED);
+        infoPanel.AddMessage(ERROR_MSG_LABEL, "Out Of Grid Mouse Click", RED);
         // Assuming Out of Bounds
         return true;
     }
@@ -360,6 +360,7 @@ bool AccumulateDraggedCell(int col, int row) {
 
 void ResetGameState(GridPrimitive &gridPrimitive) {
     if (ACTIVE_GAME_RESET) {
+        GLOBAL_GAMEPLAY_STATE = DRAW_STATE;
         GLOBAL_MOUSE_DOWN = false;
         GLOBAL_PAUSE = false;
         GLOBAL_DRAW_BORDERS = false;
@@ -369,24 +370,12 @@ void ResetGameState(GridPrimitive &gridPrimitive) {
         lastPairSpawnTime = 0.0;
         countDown = 5.0f;
         bufferTime = 5.0f;
-        status = "Draw";
-
-        infoPanel.AddMessage(LOGS_MSG_LABEL_2, "Reset", WHITE);
 
         gameClock = chrono::duration<double>(0);
 
         PREV_DRAGGED_CELLS.clear();
         ROAD_RUNNERS.clear();
         gridPrimitive.GridReset();
-
-        /*for (int i = 0; i < 5; i++) {
-            vec2 rndStPoint = GetRandomPoint();
-            vec2 rndEdPoint = GetRandomPoint(5, 3, rndStPoint);
-            cout << "Pt1: " << rndStPoint.y << "\t" << rndStPoint.x << "\t Pt2: " << rndEdPoint.y << "\t"
-                 << rndEdPoint.x << "\n";
-            gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
-                                          (int) rndEdPoint.x);
-        }*/
     }
     if (CLEAR_ROADS) {
         ROAD_RUNNERS.clear();
@@ -398,26 +387,44 @@ void ResetGameState(GridPrimitive &gridPrimitive) {
 }
 
 void MouseButton(float xmouse, float ymouse, bool left, bool down) {
+
+    int col = (int) ((xmouse - X_POS) / DX), row = (int) ((ymouse - Y_POS) / DY);
+    infoPanel.AddMessage(MOUSE_CLICK_LABEL, "Mouse Move: X" + to_string(col) + " Y " + to_string(row), WHITE);
+
     if (down) {
         PlaySound(TEXT("RoadNet/Sounds/click_x.wav"), NULL, SND_FILENAME | SND_ASYNC);
         GLOBAL_MOUSE_DOWN = true;
 
-        if (application == GAME_STATE && myResetButton.Hit(xmouse, ymouse)) {
+        if (APPLICATION_STATE == GAME_STATE && myResetButton.Hit(xmouse, ymouse)) {
+            GLOBAL_EVENT_LABEL = "RESET_EVT";
+
             ACTIVE_GAME_RESET = true;
-        } else if (application == GAME_STATE && myPauseButton.Hit(xmouse, ymouse)) {
+        } else if (APPLICATION_STATE == GAME_STATE && myPauseButton.Hit(xmouse, ymouse)) {
             GLOBAL_PAUSE = !GLOBAL_PAUSE;
-        } else if (application == GAME_STATE && myExitButton.Hit(xmouse, ymouse)) {
-            application = STARTING_MENU;
+            GLOBAL_EVENT_LABEL = "PLAY_EVT";
+            if(GLOBAL_PAUSE)
+            {
+                GLOBAL_EVENT_LABEL = "PAUSE_EVT";
+            }
+        } else if (APPLICATION_STATE == GAME_STATE && myExitButton.Hit(xmouse, ymouse)) {
+            GLOBAL_EVENT_LABEL = "EXIT_EVT";
+
+            APPLICATION_STATE = STARTING_MENU;
             ACTIVE_GAME_RESET = true;
-            infoPanel.AddMessage(LOGS_MSG_LABEL_2, "", YELLOW);
         }
-        else if (application == GAME_STATE && myClearButton.Hit(xmouse, ymouse)) {
+        else if (APPLICATION_STATE == GAME_STATE && myClearButton.Hit(xmouse, ymouse)) {
+            GLOBAL_EVENT_LABEL = "CLEAR_EVT";
+
             CLEAR_ROADS = true;
             
-        } else if (application == STARTING_MENU && myStartButton.Hit(xmouse, ymouse)) {
+        } else if (APPLICATION_STATE == STARTING_MENU && myStartButton.Hit(xmouse, ymouse)) {
+            GLOBAL_EVENT_LABEL = "START_EVT";
+
             GAME_OVER = false;
-            application = GAME_STATE;
-        } else if (application == STARTING_MENU && myQuitButton.Hit(xmouse, ymouse)) {
+            APPLICATION_STATE = GAME_STATE;
+        } else if (APPLICATION_STATE == STARTING_MENU && myQuitButton.Hit(xmouse, ymouse)) {
+            GLOBAL_EVENT_LABEL = "QUIT_EVT";
+
             glfwSetWindowShouldClose(w, true);
         } else {
             AccumulateDraggedCell(xmouse, ymouse);
@@ -443,29 +450,38 @@ void KeyButton(int key, bool down, bool shift, bool control) {
             case GLFW_KEY_P:
                 PlaySound(TEXT("RoadNet/Sounds/click_x.wav"), NULL, SND_FILENAME | SND_ASYNC);
                 GLOBAL_PAUSE = !GLOBAL_PAUSE;
+                GLOBAL_EVENT_LABEL = "PLAY_EVT";
+                if(GLOBAL_PAUSE)
+                {
+                    GLOBAL_EVENT_LABEL = "PAUSE_EVT";
+                }
                 break;
             case GLFW_KEY_SPACE:
                 PlaySound(TEXT("RoadNet/Sounds/click_x.wav"), NULL, SND_FILENAME | SND_ASYNC);
                 GLOBAL_PAUSE = !GLOBAL_PAUSE;
+                GLOBAL_EVENT_LABEL = "PLAY_EVT";
+                if(GLOBAL_PAUSE)
+                {
+                    GLOBAL_EVENT_LABEL = "PAUSE_EVT";
+                }
                 break;
             case GLFW_KEY_D:
                 PlaySound(TEXT("RoadNet/Sounds/click_x.wav"), NULL, SND_FILENAME | SND_ASYNC);
-                if (globalState == WIPE_STATE) {
-                    globalState = DRAW_STATE;
-                    status = "Draw";
+                if (GLOBAL_GAMEPLAY_STATE == WIPE_STATE) {
+                    GLOBAL_GAMEPLAY_STATE = DRAW_STATE;
                 } else {
-                    globalState = WIPE_STATE;
-                    status = "Delete";
+                    GLOBAL_GAMEPLAY_STATE = WIPE_STATE;
                 }
                 break;
             case GLFW_KEY_W:
                 PlaySound(TEXT("RoadNet/Sounds/click_x.wav"), NULL, SND_FILENAME | SND_ASYNC);
-                globalState = WIPE_STATE;
-                status = "Delete";
+                GLOBAL_GAMEPLAY_STATE = WIPE_STATE;
                 break;
             case GLFW_KEY_B:
                 PlaySound(TEXT("RoadNet/Sounds/click_x.wav"), NULL, SND_FILENAME | SND_ASYNC);
                 GLOBAL_DRAW_BORDERS = !GLOBAL_DRAW_BORDERS;
+
+                GLOBAL_EVENT_LABEL = "BORDER_DISP_EVT";
                 break;
         }
     }
@@ -481,7 +497,7 @@ void Display(GridPrimitive gridPrimitive) {
 
     UseDrawShader(ScreenMode());
 
-    if (application == STARTING_MENU) {
+    if (APPLICATION_STATE == STARTING_MENU) {
         FONT_SCALE = 13.0f;
 
         backGround.Display();
@@ -503,7 +519,7 @@ void Display(GridPrimitive gridPrimitive) {
             infoPanel.AddMessage(COUNTDOWN, " ", WHITE);
         }
     }
-    if (application == GAME_STATE) {
+    if (APPLICATION_STATE == GAME_STATE) {
         if (gameClock.count() < 0.05) {
             PlaySound(TEXT("RoadNet/Sounds/call_to_arms.wav"), NULL, SND_FILENAME | SND_ASYNC);
         }
@@ -522,8 +538,6 @@ void Display(GridPrimitive gridPrimitive) {
         for (auto &runnerLinkers: ROAD_RUNNERS) {
             string runnerDrawLog;
             runnerLinkers.second.vehicleRunner.Draw(runnerDrawLog);
-
-            infoPanel.AddMessage(LOGS_MSG_LABEL_1, runnerDrawLog, YELLOW);
         }
         if (GLOBAL_DRAW_BORDERS) {
             DrawBorders();
@@ -531,7 +545,15 @@ void Display(GridPrimitive gridPrimitive) {
         stringstream stream;
         stream << fixed << setprecision(3) << countDown;
         string countDownFormatted = stream.str();
-        infoPanel.AddMessage(COUNTDOWN, "Countdown: " + countDownFormatted + "S", WHITE);
+
+        if(countDown < 5.0f)
+        {
+            infoPanel.AddMessage(COUNTDOWN, "Countdown: " + countDownFormatted + "S", RED);
+        }
+        else
+        {
+            infoPanel.AddMessage(COUNTDOWN, "Countdown: " + countDownFormatted + "S", GREEN);
+        }
     }
 
     infoPanel.InfoDisplay(FONT_SCALE);
@@ -606,7 +628,7 @@ int main(int ac, char **av) {
 
         NUM_OF_FRAMES += 1;
 
-        if (application == GAME_STATE) {
+        if (APPLICATION_STATE == GAME_STATE) {
             ToggleDraggedCellsStates(gridPrimitive);
             ResetGameState(gridPrimitive);
         }
