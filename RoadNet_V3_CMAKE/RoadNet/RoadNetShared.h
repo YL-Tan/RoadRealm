@@ -14,7 +14,7 @@
 using namespace std;
 
 #define NROWS 12
-#define NCOLS 12
+#define NCOLS 10
 #define H_EDGE_BUFFER 40
 #define W_EDGE_BUFFER 100
 #define INFO_MSG_SIZE 12
@@ -212,7 +212,7 @@ vec2 GetRandomPoint(int numOfRndValues = 5, int radiusLimit = 0,const vec2 &orig
         {
             potentialValues = FindNeighbors(originPoint, radiusLimit);
         }
-        return potentialValues.at(rand() % potentialValues.size());
+        return potentialValues.at(rndNodePoint.at(rand() % (rndNodePoint.size() - 1)) % potentialValues.size());
     }
     return {(rndNodePoint.at(0) % NCOLS), (rndNodePoint.at(1) % NROWS)};
 /*

@@ -23,7 +23,9 @@
 #include "Sprite.h"
 #include <windows.h>
 #include <mmsystem.h>
+
 #pragma comment(lib, "winmm.lib")
+
 using namespace std;
 
 unsigned int NUM_OF_FRAMES = 0;

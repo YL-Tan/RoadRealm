@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.24)
 project(RoadRealm)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static -static-libgcc -static-libstdc++")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static -static-libgcc -static-libstdc++ -lwinmm")
 
 include_directories(GraphicsLinking/include)
 include_directories(GraphicsLinking/include/GL)
@@ -31,3 +31,4 @@ find_package(OpenGL REQUIRED)
 target_link_libraries(RoadRealm OpenGL::GL)
 target_link_libraries(RoadRealm OpenGL::GLU)
 target_link_libraries(RoadRealm glfw3)
+target_link_libraries(RoadRealm winMM.Lib)

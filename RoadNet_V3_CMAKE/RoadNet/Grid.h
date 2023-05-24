@@ -252,7 +252,7 @@ public:
         }
         for (DestinationObjectives& objectives : gridDestObjectives) {
             if (objectives.destLinked) {
-                objectives.destLinked == false;
+                objectives.destLinked = false;
             }
         }
     }
