@@ -379,8 +379,8 @@ void ResetGameState(GridPrimitive &gridPrimitive) {
     }
     if (CLEAR_ROADS) {
         ROAD_RUNNERS.clear();
-        gridPrimitive.GridClearRoads();
-        
+        int numRoadsAfterClear = gridPrimitive.GridClearAndCountRoads();
+        currNumRoads += numRoadsAfterClear;
     }
     CLEAR_ROADS = false;
     ACTIVE_GAME_RESET = false;

@@ -243,8 +243,12 @@ public:
         return true;
     }
 
-    void GridClearRoads() {
+    int GridClearAndCountRoads() {
+        int counter = 0;
         for (Node& cell : gridNodes) {
+            if (cell.currentState == CLOSED_ROAD) {
+                counter++;
+            }
             if (!IsAClosedNodeState(cell)) {
                 cell.NodeReset();
             }
@@ -255,6 +259,7 @@ public:
                 objectives.destLinked = false;
             }
         }
+        return counter;
     }
 };
 
