@@ -35,6 +35,8 @@ bool GLOBAL_MOUSE_DOWN = false, GLOBAL_PAUSE = false, GLOBAL_DRAW_BORDERS = fals
 double REPLENISH_INTERVAL = 10.0, FRAMES_PER_SECONDS = 0;
 int REPLENISH_ROADS_NUM = 20;
 float FONT_SCALE = 10.0f;
+
+int PAIR_GENERATION_RETRY = 3;
 string LOCAL_STORAGE = "RoadNet/Storage/best_record.txt";
 
 vec2 CURRENT_CLICKED_CELL((NROWS + NCOLS), (NROWS + NCOLS));
@@ -111,29 +113,44 @@ void replenishRoads() {
     }
 }
 
+
+void createPair(GridPrimitive& gridPrimitive, int radius = 2, int retryCount = 3)
+{
+    vec2 rndStPoint;
+    vec2 rndEdPoint;
+
+    do {
+        rndStPoint = GetRandomPoint();
+        rndEdPoint = GetRandomPoint(5, radius, rndStPoint);
+
+
+    }while(gridPrimitive.IsAClosedNodeState(rndStPoint, true) || gridPrimitive.IsAClosedNodeState(rndEdPoint, true));
+
+    bool addStatus =gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
+                                                  (int) rndEdPoint.x);
+    if(!addStatus && retryCount > 0)
+    {
+        createPair(gridPrimitive, radius + 1, retryCount - 1);
+    }
+
+
+    if ( APPLICATION_STATE == GAME_STATE && addStatus) {
+        PlaySound(TEXT("RoadNet/Sounds/chime.wav"), NULL, SND_FILENAME | SND_ASYNC);
+    }
+}
+
 void spawnPair(int interval, GridPrimitive& gridPrimitive, int radius = 2) {
     if(gameClock.count() - lastPairSpawnTime >= interval){
-        vec2 rndStPoint;
-        vec2 rndEdPoint;
 
-        do {
-            rndStPoint = GetRandomPoint();
-            rndEdPoint = GetRandomPoint(5, radius, rndStPoint);
-        }while(gridPrimitive.IsAClosedNodeState(rndStPoint, true) || gridPrimitive.IsAClosedNodeState(rndEdPoint, true)) ;
 
-        cout << "Pt1: " << rndStPoint.y << "\t" << rndStPoint.x << "\t Pt2: " << rndEdPoint.y << "\t"
-            << rndEdPoint.x << "\n";
+        createPair(gridPrimitive, radius, PAIR_GENERATION_RETRY);
 
-        bool addStatus = gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
-                                      (int) rndEdPoint.x);
 
-        if (APPLICATION_STATE == GAME_STATE && addStatus) {
-            PlaySound(TEXT("RoadNet/Sounds/chime.wav"), NULL, SND_FILENAME | SND_ASYNC);
-        }
 
         lastPairSpawnTime = gameClock.count();
     }
 }
+
 
 void Update(GridPrimitive &gridPrimitive) {
 

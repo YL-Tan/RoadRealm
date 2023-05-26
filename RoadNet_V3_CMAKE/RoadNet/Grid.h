@@ -117,13 +117,37 @@ public:
         return false;
     }
 
+    bool NeighborIsOccupied(vec2 point){
+        vec2 adjacentBottom = vec2(point.x-1, point.y);
+        vec2 adjacentTop= vec2(point.x+1, point.y);
+        vec2 adjacentLeft= vec2(point.x, point.y - 1);
+        vec2 adjacentRight= vec2(point.x, point.y + 1);
+
+        vec2 adjacentBottomLeft= vec2(point.x-1, point.y-1);
+        vec2 adjacentTopLeft= vec2(point.x+1, point.y-1);
+        vec2 adjacentBottomRight= vec2(point.x-1, point.y+1);
+        vec2 adjacentTopRight= vec2(point.x+1, point.y+1);
+
+
+        vector<vec2> adjacentNodes = {adjacentBottom, adjacentTop, adjacentLeft, adjacentRight, adjacentBottomLeft, adjacentTopLeft, adjacentBottomRight, adjacentTopRight};
+
+        for (auto node: adjacentNodes){
+            if (IsAClosedNodeState(node)){
+                return true;
+            }
+        }
+        return false;
+    }
+
     bool AddNewObjective(int startR, int startC, int endR, int endC) {
 
         if (!DoesDestinationExists(vec2(startR, startC), vec2(endR, endC))) {
             int startNIndex = CombineDigits(startR, startC);
             int endNIndex = CombineDigits(endR, endC);
+            vec2 startPoint = vec2(startC, startR);
+            vec2 endPoint = vec2(endC, endR);
 
-            if (startNIndex < gridNodes.size() && endNIndex < gridNodes.size()) {
+            if (startNIndex < gridNodes.size() && endNIndex < gridNodes.size() && !NeighborIsOccupied(startPoint) && !NeighborIsOccupied(endPoint)) {
                 if (!IsAClosedNodeState(gridNodes.at(startNIndex)) && !IsAClosedNodeState(gridNodes.at(endNIndex))) {
                     // House = Start, Factory = End
                     gridNodes.at(startNIndex).currentState = CLOSED_HOUSE;
