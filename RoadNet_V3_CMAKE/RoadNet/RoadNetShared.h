@@ -18,6 +18,7 @@ using namespace std;
 #define H_EDGE_BUFFER 40
 #define W_EDGE_BUFFER 100
 #define INFO_MSG_SIZE 12
+#define NUM_OF_RND_VAL 5
 
 enum NodeStates {
     OPEN, CLOSED_ROAD, CLOSED_HOUSE, CLOSED_FACTORY, POTENTIAL_ROAD
@@ -172,7 +173,7 @@ bool IsWithInBounds(int row, int col) {
 
 bool IsWithInBounds(const vec2& point)
 {
-    return IsWithInBounds(point.x, point.y);
+    return IsWithInBounds(point.y, point.x);
 }
 
 
@@ -183,9 +184,8 @@ int GetDistance(const vec2 &firstPoint, const vec2 &secondPoint) {
     return xAxisDist + yAxisDist;
 }
 
-vector<vec2> FindNeighbors(vec2 startingPoint, int dist)
+void FindNeighbors(const vec2& startingPoint, int dist, vector<vec2> &potentialLocations)
 {
-    vector<vec2> potentialLocations;
     for (int i = (int) startingPoint.y - dist; i <= (int) startingPoint.y + dist; i++)
     {
 
@@ -198,7 +198,6 @@ vector<vec2> FindNeighbors(vec2 startingPoint, int dist)
             }
         }
     }
-    return potentialLocations;
 }
 
 
@@ -212,19 +211,20 @@ void GetRandomDistribution(int distribLimit, int numOfRndValues, vector<int> &di
     }
 }
 
-vec2 GetRandomPoint(int numOfRndValues = 5, int radiusLimit = 0,const vec2 &originPoint = {}) {
+
+vec2 GetRandomPoint(int numOfRndValues = NUM_OF_RND_VAL, int rndIndex = 0,const vector<vec2>& potentialVal = {}) {
     vector<int> rndNodePoint = {};
     GetRandomDistribution(NROWS, numOfRndValues, rndNodePoint);
-    if (radiusLimit > 0) {
 
-        vector <vec2> potentialValues = {};
-        while (potentialValues.empty())
-        {
-            potentialValues = FindNeighbors(originPoint, radiusLimit);
-        }
-        return potentialValues.at(rndNodePoint.at(rand() % (rndNodePoint.size() - 1)) % potentialValues.size());
+    if(!potentialVal.empty())
+    {
+        int getRndIndex = rndNodePoint.at(rndIndex) % potentialVal.size();
+        return potentialVal.at(getRndIndex);
     }
-    return {(rndNodePoint.at(0) % NCOLS), (rndNodePoint.at(1) % NROWS)};
+
+    vec2 rndPoint = vec2((rndNodePoint.at(rand() % (rndNodePoint.size() - 1)) % NCOLS),
+                         (rndNodePoint.at(rand() % (rndNodePoint.size() - 1)) % NROWS));
+    return rndPoint;
 }
 
 vec3 GetRandomColor(int stride = 1) {
@@ -239,6 +239,15 @@ vec3 GetRandomColor(int stride = 1) {
     float blue = (float) ((rndDistribColors.at(2) + stride) % maxColorShades) / (float) maxColorShades;
 
     return {red, green, blue};
+}
+
+bool IsSamePosition(const vec2& point1, const vec2& point2)
+{
+    if(point1.x == point2.x && point1.y == point2.y)
+    {
+        return true;
+    }
+    return false;
 }
 
 void DrawVertex(float row, float col) {

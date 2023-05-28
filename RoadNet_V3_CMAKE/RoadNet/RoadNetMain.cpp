@@ -114,39 +114,36 @@ void replenishRoads() {
 }
 
 
-void createPair(GridPrimitive& gridPrimitive, int radius = 2, int retryCount = 3)
-{
+void GenerateDestination(GridPrimitive &gridPrimitive, int radius = 2, int retryCount = 3) {
     vec2 rndStPoint;
     vec2 rndEdPoint;
 
-    do {
+    vector<vec2> potentialValues = {};
+
+    bool addStatus = false;
+    int i = 0, numOfRndValues = NUM_OF_RND_VAL + (retryCount * 2);
+    while (!addStatus && i < numOfRndValues) {
         rndStPoint = GetRandomPoint();
-        rndEdPoint = GetRandomPoint(5, radius, rndStPoint);
+        FindNeighbors(rndStPoint, radius, potentialValues);
+        rndEdPoint = GetRandomPoint(numOfRndValues, i, potentialValues);
 
-
-    }while(gridPrimitive.IsAClosedNodeState(rndStPoint, true) || gridPrimitive.IsAClosedNodeState(rndEdPoint, true));
-
-    bool addStatus =gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
+        addStatus = gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
                                                   (int) rndEdPoint.x);
-    if(!addStatus && retryCount > 0)
-    {
-        createPair(gridPrimitive, radius + 1, retryCount - 1);
+        i += 1;
     }
 
+    if (!addStatus && retryCount > 0) {
+        GenerateDestination(gridPrimitive, radius + 1, retryCount - 1);
+    }
 
-    if ( APPLICATION_STATE == GAME_STATE && addStatus) {
+    if (APPLICATION_STATE == GAME_STATE && addStatus) {
         PlaySound(TEXT("RoadNet/Sounds/chime.wav"), NULL, SND_FILENAME | SND_ASYNC);
     }
 }
 
-void spawnPair(int interval, GridPrimitive& gridPrimitive, int radius = 2) {
-    if(gameClock.count() - lastPairSpawnTime >= interval){
-
-
-        createPair(gridPrimitive, radius, PAIR_GENERATION_RETRY);
-
-
-
+void spawnPair(int interval, GridPrimitive &gridPrimitive, int radius = 2) {
+    if (gameClock.count() - lastPairSpawnTime >= interval) {
+        GenerateDestination(gridPrimitive, radius, PAIR_GENERATION_RETRY);
         lastPairSpawnTime = gameClock.count();
     }
 }
@@ -187,7 +184,7 @@ void Update(GridPrimitive &gridPrimitive) {
             countDown = 5.0f;  // reset countdown if all destinations are linked
             bufferTime = 5.0f;
         }
-        int radius = ((((int)gameClock.count() % 3600) / 60) + 1) * 2;
+        int radius = ((((int) gameClock.count() % 3600) / 60) + 1) * 2;
         spawnPair(5, gridPrimitive, radius);
         replenishRoads();
     } else {
@@ -274,7 +271,7 @@ bool AreValidDraggedCells(GridPrimitive &gridPrimitive, Node &houseNode, Node &f
         if (i > 0 && gridPrimitive.IsAClosedNodeState(prevCell, true)) {
             return false;
         }
-        if (((int) PREV_DRAGGED_CELLS.size() > currNumRoads) && GLOBAL_GAMEPLAY_STATE == DRAW_STATE)  {
+        if (((int) PREV_DRAGGED_CELLS.size() > currNumRoads) && GLOBAL_GAMEPLAY_STATE == DRAW_STATE) {
             infoPanel.AddMessage(ERROR_MSG_LABEL, "Not enough road!", RED);
             return false;
         }
@@ -296,7 +293,7 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
 
             for (const vec2 &cell: PREV_DRAGGED_CELLS) {
 
-                Node getNode = gridPrimitive.GetNode(vec2(cell.x,cell.y));
+                Node getNode = gridPrimitive.GetNode(vec2(cell.x, cell.y));
                 // Hash Key
                 pathHashKey += to_string(getNode.currentPos.row) + to_string(getNode.currentPos.col);
                 // Add To Path
@@ -307,18 +304,17 @@ void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
                 }
             }
             // Link Result
-            isErrorCorrect = LinkedPathFormulation(gridPrimitive, houseNode.currentPos, factoryNode.currentPos, vehicleRunner,
-                                  pathHashKey);
+            isErrorCorrect = LinkedPathFormulation(gridPrimitive, houseNode.currentPos, factoryNode.currentPos,
+                                                   vehicleRunner,
+                                                   pathHashKey);
             // Toggle/Handle Node State If Successful
-            if(isErrorCorrect)
-            {
+            if (isErrorCorrect) {
                 cout << "Is Correct Linking\n";
                 gridPrimitive.ResetNodes(PREV_DRAGGED_CELLS, false);
             }
         }
 
-        if (!isErrorCorrect)
-        {
+        if (!isErrorCorrect) {
             PlaySound(TEXT("RoadNet/Sounds/error.wav"), NULL, SND_FILENAME | SND_ASYNC);
             cout << "Is Not Correct Dragging Linking\n";
             gridPrimitive.ResetNodes(PREV_DRAGGED_CELLS, true);
@@ -419,8 +415,7 @@ void MouseButton(float xmouse, float ymouse, bool left, bool down) {
         } else if (APPLICATION_STATE == GAME_STATE && myPauseButton.Hit(xmouse, ymouse)) {
             GLOBAL_PAUSE = !GLOBAL_PAUSE;
             GLOBAL_EVENT_LABEL = "PLAY_EVT";
-            if(GLOBAL_PAUSE)
-            {
+            if (GLOBAL_PAUSE) {
                 GLOBAL_EVENT_LABEL = "PAUSE_EVT";
             }
         } else if (APPLICATION_STATE == GAME_STATE && myExitButton.Hit(xmouse, ymouse)) {
@@ -428,12 +423,11 @@ void MouseButton(float xmouse, float ymouse, bool left, bool down) {
 
             APPLICATION_STATE = STARTING_MENU;
             ACTIVE_GAME_RESET = true;
-        }
-        else if (APPLICATION_STATE == GAME_STATE && myClearButton.Hit(xmouse, ymouse)) {
+        } else if (APPLICATION_STATE == GAME_STATE && myClearButton.Hit(xmouse, ymouse)) {
             GLOBAL_EVENT_LABEL = "CLEAR_EVT";
 
             CLEAR_ROADS = true;
-            
+
         } else if (APPLICATION_STATE == STARTING_MENU && myStartButton.Hit(xmouse, ymouse)) {
             GLOBAL_EVENT_LABEL = "START_EVT";
 
@@ -468,8 +462,7 @@ void KeyButton(int key, bool down, bool shift, bool control) {
                 PlaySound(TEXT("RoadNet/Sounds/click_x.wav"), NULL, SND_FILENAME | SND_ASYNC);
                 GLOBAL_PAUSE = !GLOBAL_PAUSE;
                 GLOBAL_EVENT_LABEL = "PLAY_EVT";
-                if(GLOBAL_PAUSE)
-                {
+                if (GLOBAL_PAUSE) {
                     GLOBAL_EVENT_LABEL = "PAUSE_EVT";
                 }
                 break;
@@ -477,8 +470,7 @@ void KeyButton(int key, bool down, bool shift, bool control) {
                 PlaySound(TEXT("RoadNet/Sounds/click_x.wav"), NULL, SND_FILENAME | SND_ASYNC);
                 GLOBAL_PAUSE = !GLOBAL_PAUSE;
                 GLOBAL_EVENT_LABEL = "PLAY_EVT";
-                if(GLOBAL_PAUSE)
-                {
+                if (GLOBAL_PAUSE) {
                     GLOBAL_EVENT_LABEL = "PAUSE_EVT";
                 }
                 break;
@@ -563,12 +555,9 @@ void Display(GridPrimitive gridPrimitive) {
         stream << fixed << setprecision(3) << countDown;
         string countDownFormatted = stream.str();
 
-        if(countDown < 5.0f)
-        {
+        if (countDown < 5.0f) {
             infoPanel.AddMessage(COUNTDOWN, "Countdown: " + countDownFormatted + "S", RED);
-        }
-        else
-        {
+        } else {
             infoPanel.AddMessage(COUNTDOWN, "Countdown: " + countDownFormatted + "S", GREEN);
         }
     }
