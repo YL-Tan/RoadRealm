@@ -424,7 +424,7 @@ struct Vehicle {
     }
 
     void Update(float dt) {
-        t += dt * speed;
+        t += speed * dt / PathLength(runnerPath);
         if (t < 0 || t > 1) speed = -speed;
         t = t < 0 ? 0 : t > 1 ? 1 : t;
     }

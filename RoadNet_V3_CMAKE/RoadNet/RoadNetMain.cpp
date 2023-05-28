@@ -283,7 +283,7 @@ bool AreValidDraggedCells(GridPrimitive &gridPrimitive, Node &houseNode, Node &f
 void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
     if (!GLOBAL_MOUSE_DOWN && !PREV_DRAGGED_CELLS.empty()) {
 
-        Vehicle vehicleRunner(-.2f, .4f);
+        Vehicle vehicleRunner(-2.5f, .0f);
         Node houseNode, factoryNode;
         string pathHashKey;
 
