@@ -121,7 +121,7 @@ void GenerateDestination(GridPrimitive &gridPrimitive, int radius = 2, int retry
     vector<vec2> potentialValues = {};
 
     bool addStatus = false;
-    int i = 0, numOfRndValues = NUM_OF_RND_VAL + (retryCount * 2);
+    int i = 0, numOfRndValues = NUM_OF_RND_VAL + (retryCount * radius);
     while (!addStatus && i < numOfRndValues) {
         rndStPoint = GetRandomPoint();
         FindNeighbors(rndStPoint, radius, potentialValues);
@@ -283,7 +283,7 @@ bool AreValidDraggedCells(GridPrimitive &gridPrimitive, Node &houseNode, Node &f
 void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
     if (!GLOBAL_MOUSE_DOWN && !PREV_DRAGGED_CELLS.empty()) {
 
-        Vehicle vehicleRunner(-2.5f, .0f);
+        Vehicle vehicleRunner(-.25f, .0f);
         Node houseNode, factoryNode;
         string pathHashKey;
 

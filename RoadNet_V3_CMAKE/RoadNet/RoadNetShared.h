@@ -214,7 +214,7 @@ void GetRandomDistribution(int distribLimit, int numOfRndValues, vector<int> &di
 
 vec2 GetRandomPoint(int numOfRndValues = NUM_OF_RND_VAL, int rndIndex = 0,const vector<vec2>& potentialVal = {}) {
     vector<int> rndNodePoint = {};
-    GetRandomDistribution(NROWS, numOfRndValues, rndNodePoint);
+    GetRandomDistribution((NROWS * numOfRndValues), numOfRndValues, rndNodePoint);
 
     if(!potentialVal.empty())
     {
@@ -424,7 +424,7 @@ struct Vehicle {
     }
 
     void Update(float dt) {
-        t += speed * dt / PathLength(runnerPath);
+        t += speed * dt;
         if (t < 0 || t > 1) speed = -speed;
         t = t < 0 ? 0 : t > 1 ? 1 : t;
     }
