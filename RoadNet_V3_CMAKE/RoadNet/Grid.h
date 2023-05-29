@@ -3,8 +3,8 @@
  * @author Team 8: Edwin Kaburu, Vincent Marklynn, Yong Long Tan
  * @date 5/29/2023
  */
-#ifndef ROADREALM_ASTAR_H
-#define ROADREALM_ASTAR_H
+#ifndef ROADREALM_GRID_H
+#define ROADREALM_GRID_H
 
 #include "RoadNetShared.h"
 
@@ -39,7 +39,7 @@ private:
             for (int col = 0; col < NCOLS; col++) {
                 Node cellNode(row, col);
                 cellNode.color = nodesDefaultColor;
-                // Node to Collection
+                // Add Node to Collection
                 gridNodes.push_back(cellNode);
             }
         }
@@ -63,9 +63,8 @@ private:
      * @param potFactory Vec2 Struct Position
      * @return Boolean Condition
      */
-    bool DoesDestinationExists(const vec2& potHouse, const vec2& potFactory) {
+    bool DoesDestinationExists(const vec2 &potHouse, const vec2 &potFactory) {
         for (DestinationObjectives &objectives: gridDestObjectives) {
-            // Validate if X-Y Axis Matches
             bool isHouseDuplicate = objectives.houseNode.currentPos.AlignmentPosMatches(potHouse.y, potHouse.x);
             bool isFactDuplicate = objectives.factoryNode.currentPos.AlignmentPosMatches(potFactory.y, potFactory.x);
 
@@ -82,35 +81,25 @@ private:
      * @param node Node Struct
      * @return Boolean Condition
      */
-    bool NodeStatesHandler(Node *node)
-    {
+    bool NodeStatesHandler(Node *node) {
         if (node->currentState == OPEN && GLOBAL_GAMEPLAY_STATE == DRAW_STATE) {
-            // Node State Changes, Swap/Toggled
             node->currentState = node->transState;
-            //node->prevState = OPEN;
             node->transState = CLOSED_ROAD;
             node->color = ORANGE;
             return true;
         }
         if (node->currentState == CLOSED_ROAD && GLOBAL_GAMEPLAY_STATE == WIPE_STATE) {
-            // Node State Changes, Swap/Toggled
             node->currentState = node->transState;
-            //node->prevState = CLOSED_ROAD;
             node->transState = OPEN;
             node->color = ORANGE;
             return true;
         }
         if (node->currentState == POTENTIAL_ROAD) {
-            // Move to TransState
             node->currentState = node->transState;
-
             if (this->revertState) {
-                // Move to PrevState
                 node->currentState = node->prevState;
             }
-
             node->transState = POTENTIAL_ROAD;
-
             if (node->currentState == CLOSED_ROAD) {
                 node->color = GREY;
                 node->prevState = CLOSED_ROAD;
@@ -120,6 +109,34 @@ private:
                 node->prevState = OPEN;
             }
             return true;
+        }
+        return false;
+    }
+
+    /**
+     * NeighborIsOccupied() Validate If Adjacent Neighbours are Closed States
+     *
+     * @param point Vec2 Struct Grid Position
+     * @return Boolean Condition
+     */
+    bool NeighborIsOccupied(const vec2 &point) {
+        vec2 adjacentBottom = vec2(point.x - 1, point.y);
+        vec2 adjacentTop = vec2(point.x + 1, point.y);
+        vec2 adjacentLeft = vec2(point.x, point.y - 1);
+        vec2 adjacentRight = vec2(point.x, point.y + 1);
+
+        vec2 adjacentBottomLeft = vec2(point.x - 1, point.y - 1);
+        vec2 adjacentTopLeft = vec2(point.x + 1, point.y - 1);
+        vec2 adjacentBottomRight = vec2(point.x - 1, point.y + 1);
+        vec2 adjacentTopRight = vec2(point.x + 1, point.y + 1);
+
+        vector<vec2> adjacentNodes = {adjacentBottom, adjacentTop, adjacentLeft, adjacentRight, adjacentBottomLeft,
+                                      adjacentTopLeft, adjacentBottomRight, adjacentTopRight};
+
+        for (auto node: adjacentNodes) {
+            if (IsAClosedNodeState(node)) {
+                return true;
+            }
         }
         return false;
     }
@@ -157,43 +174,14 @@ public:
         for (DestinationObjectives &objectives: gridDestObjectives) {
             if (IsSimilarNodePos(homePos, objectives.houseNode.currentPos) &&
                 IsSimilarNodePos(factoryPos, objectives.factoryNode.currentPos) && objectives.destLinked != isLinked) {
-                // Update Performed.
                 objectives.destLinked = isLinked;
-
                 objectives.houseNode.isConnected = isLinked;
                 objectives.factoryNode.isConnected = isLinked;
+                // Update Performed.
                 return true;
             }
         }
         // No Updates Performed. (Combined: No record of home-to-factory being an objective destination)
-        return false;
-    }
-
-    /**
-     * NeighborIsOccupied() Validate If Adjacent Neighbours are Closed States
-     *
-     * @param point Vec2 Struct Grid Position
-     * @return Boolean Condition
-     */
-    bool NeighborIsOccupied(const vec2& point){
-        vec2 adjacentBottom = vec2(point.x-1, point.y);
-        vec2 adjacentTop= vec2(point.x+1, point.y);
-        vec2 adjacentLeft= vec2(point.x, point.y - 1);
-        vec2 adjacentRight= vec2(point.x, point.y + 1);
-
-        vec2 adjacentBottomLeft= vec2(point.x-1, point.y-1);
-        vec2 adjacentTopLeft= vec2(point.x+1, point.y-1);
-        vec2 adjacentBottomRight= vec2(point.x-1, point.y+1);
-        vec2 adjacentTopRight= vec2(point.x+1, point.y+1);
-
-
-        vector<vec2> adjacentNodes = {adjacentBottom, adjacentTop, adjacentLeft, adjacentRight, adjacentBottomLeft, adjacentTopLeft, adjacentBottomRight, adjacentTopRight};
-
-        for (auto node: adjacentNodes){
-            if (IsAClosedNodeState(node)){
-                return true;
-            }
-        }
         return false;
     }
 
@@ -204,7 +192,7 @@ public:
      * @param startC Integer S Col
      * @param endR Integer E Row
      * @param endC Integer E Col
-     * @return
+     * @return Boolean Condition
      */
     bool AddNewObjective(int startR, int startC, int endR, int endC) {
 
@@ -214,9 +202,12 @@ public:
             vec2 startPoint = vec2(startC, startR);
             vec2 endPoint = vec2(endC, endR);
 
-            bool isSamePoint = IsSamePosition(startPoint, endPoint);
+            bool isSamePoint = false;
 
-            if (startNIndex < gridNodes.size() && endNIndex < gridNodes.size() && !NeighborIsOccupied(startPoint) && !NeighborIsOccupied(endPoint)) {
+            if (startNIndex < gridNodes.size() && endNIndex < gridNodes.size() && !NeighborIsOccupied(startPoint) &&
+                !NeighborIsOccupied(endPoint)) {
+                isSamePoint = IsSimilarNodePos(gridNodes.at(startNIndex).currentPos,
+                                               gridNodes.at(endNIndex).currentPos);
                 if (!IsAClosedNodeState(gridNodes.at(startNIndex), true) && !IsAClosedNodeState(gridNodes.at(endNIndex),
                                                                                                 true) && !isSamePoint) {
                     // House = Start, Factory = End
@@ -289,9 +280,9 @@ public:
      */
     Node NodeHandler(int nodeIndex) {
         Node *node = &gridNodes.at(nodeIndex);
-        if(this->revertState && !IsAClosedNodeState(*node, true))
-        {
-            cout << "\tCR-State: " << PrintNodeState(node->currentState) << "\tPR-State" << PrintNodeState(node->prevState) << "\tTR-State" <<  PrintNodeState(node->transState) << "\n";
+        if (this->revertState && !IsAClosedNodeState(*node, true)) {
+            cout << "\tCR-State: " << PrintNodeState(node->currentState) << "\tPR-State"
+                 << PrintNodeState(node->prevState) << "\tTR-State" << PrintNodeState(node->transState) << "\n";
             node->currentState = POTENTIAL_ROAD;
         }
         NodeStatesHandler(node);
@@ -321,11 +312,7 @@ public:
      */
     bool IsAClosedNodeState(vec2 &gridAxisPoint, bool favorClRoad = false) {
         Node node = GetNode(gridAxisPoint);
-        if (node.currentState == CLOSED_FACTORY || node.currentState == CLOSED_HOUSE ||
-            (favorClRoad && node.currentState == CLOSED_ROAD)) {
-            return true;
-        }
-        return false;
+        return IsAClosedNodeState(node, favorClRoad);
     }
 
     /**
@@ -387,7 +374,7 @@ public:
      */
     int GridClearAndCountRoads() {
         int counter = 0;
-        for (Node& cell : gridNodes) {
+        for (Node &cell: gridNodes) {
             if (cell.currentState == CLOSED_ROAD) {
                 counter++;
             }
@@ -396,7 +383,7 @@ public:
             }
             cell.isConnected = false;
         }
-        for (DestinationObjectives& objectives : gridDestObjectives) {
+        for (DestinationObjectives &objectives: gridDestObjectives) {
             if (objectives.destLinked) {
                 objectives.destLinked = false;
             }
@@ -405,4 +392,4 @@ public:
     }
 };
 
-#endif //ROADREALM_ASTAR_H
+#endif //ROADREALM_GRID_H
