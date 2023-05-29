@@ -1,42 +1,71 @@
-// Grid.h
-// Team 8
-
+/**
+ * @file Grid.h
+ * @author Team 8: Edwin Kaburu, Vincent Marklynn, Yong Long Tan
+ * @date 5/29/2023
+ */
 #ifndef ROADREALM_ASTAR_H
 #define ROADREALM_ASTAR_H
 
 #include "RoadNetShared.h"
 
+/**
+ * @struct DestinationObjectives
+ * @details Data Structure for House and Factory Node along with Linking Status
+ */
 struct DestinationObjectives {
     Node &houseNode;
     Node &factoryNode;
     bool destLinked = false;
 };
 
+/**
+ * @class GridPrimitive
+ * @details Representation and functionalities for a Grid
+ */
 class GridPrimitive {
 private:
+    // Default background Node Color
     vec3 nodesDefaultColor = WHITE;
+    // List of Objective Destinations
     vector<DestinationObjectives> gridDestObjectives;
+    // Reversion condition
     bool revertState = false;
 
+    /**
+     * FormulateGrid() Will formulate the nodes contained within the grid based on NROWS AND NCOLS
+     */
     void FormulateGrid() {
         for (int row = 0; row < NROWS; row++) {
             for (int col = 0; col < NCOLS; col++) {
                 Node cellNode(row, col);
                 cellNode.color = nodesDefaultColor;
-
-                // Add To Collection/Vector
+                // Node to Collection
                 gridNodes.push_back(cellNode);
             }
         }
     }
 
+    /**
+     * IsSimilarNodePos()  Validate If Position of Two Node are in the same grid's axis spot.
+     *
+     * @param nodePosComp NodePosition Struct
+     * @param nodePosComp1 NodePosition Struct
+     * @return Boolean Condition
+     */
     bool IsSimilarNodePos(NodePosition nodePosComp, NodePosition nodePosComp1) {
         return nodePosComp.AlignmentPosMatches(nodePosComp1);
     }
 
-    bool DoesDestinationExists(vec2 potHouse, vec2 potFactory) {
+    /**
+     * DoesDestinationExists() Validate If Vec2 Position On Grid is a Destination Objective
+     *
+     * @param potHouse Vec2 Struct Position
+     * @param potFactory Vec2 Struct Position
+     * @return Boolean Condition
+     */
+    bool DoesDestinationExists(const vec2& potHouse, const vec2& potFactory) {
         for (DestinationObjectives &objectives: gridDestObjectives) {
-
+            // Validate if X-Y Axis Matches
             bool isHouseDuplicate = objectives.houseNode.currentPos.AlignmentPosMatches(potHouse.y, potHouse.x);
             bool isFactDuplicate = objectives.factoryNode.currentPos.AlignmentPosMatches(potFactory.y, potFactory.x);
 
@@ -46,6 +75,13 @@ private:
         }
         return false;
     }
+
+    /**
+     * NodeStatesHandler() Node State Event Handler
+     *
+     * @param node Node Struct
+     * @return Boolean Condition
+     */
     bool NodeStatesHandler(Node *node)
     {
         if (node->currentState == OPEN && GLOBAL_GAMEPLAY_STATE == DRAW_STATE) {
@@ -89,18 +125,34 @@ private:
     }
 
 public:
-    // N * N grid's nodes/cells
+    // List Of Nodes In Grid
     vector<Node> gridNodes = {};
 
+    /**
+     * GridPrimitive() Default Constructor For Grid Primitive Instance
+     */
     GridPrimitive() {
         FormulateGrid();
     }
 
+    /**
+     * GridPrimitive() Default Constructor For Grid Primitive Instance with default color
+     *
+     * @param colorInput Vec3 Color
+     */
     GridPrimitive(const vec3 &colorInput) {
         FormulateGrid();
         nodesDefaultColor = colorInput;
     }
 
+    /**
+     * UpdateDestinationLink() Update Linking Status from House To Factory
+     *
+     * @param homePos House NodePosition
+     * @param factoryPos Factory NodePosition
+     * @param isLinked Linking Status
+     * @return Boolean Condition
+     */
     bool UpdateDestinationLink(NodePosition homePos, NodePosition factoryPos, bool isLinked) {
         for (DestinationObjectives &objectives: gridDestObjectives) {
             if (IsSimilarNodePos(homePos, objectives.houseNode.currentPos) &&
@@ -117,7 +169,13 @@ public:
         return false;
     }
 
-    bool NeighborIsOccupied(vec2 point){
+    /**
+     * NeighborIsOccupied() Validate If Adjacent Neighbours are Closed States
+     *
+     * @param point Vec2 Struct Grid Position
+     * @return Boolean Condition
+     */
+    bool NeighborIsOccupied(const vec2& point){
         vec2 adjacentBottom = vec2(point.x-1, point.y);
         vec2 adjacentTop= vec2(point.x+1, point.y);
         vec2 adjacentLeft= vec2(point.x, point.y - 1);
@@ -139,6 +197,15 @@ public:
         return false;
     }
 
+    /**
+     * AddNewObjective() Add a new Destination Objective from possible house and factory, row to col axis
+     *
+     * @param startR Integer S Row
+     * @param startC Integer S Col
+     * @param endR Integer E Row
+     * @param endC Integer E Col
+     * @return
+     */
     bool AddNewObjective(int startR, int startC, int endR, int endC) {
 
         if (!DoesDestinationExists(vec2(startR, startC), vec2(endR, endC))) {
@@ -173,6 +240,9 @@ public:
         return false;
     }
 
+    /**
+     *  DrawGrid() GridPrimitive Draw Function
+     */
     void DrawGrid() {
         // Draw All Cells
         for (Node &cell: gridNodes) {
@@ -203,23 +273,37 @@ public:
         }
     }
 
+    /**
+     * GridUpdate() Grid Update Function
+     */
     void GridUpdate() {
-        // GetMin(Width, Height) -> The Smallest Length
+        // Update Diameter Max Size
         MAX_DIAMETER_SIZE = GetMin<float>((int) DX - 1, (int) DY - 1) * MAX_CIR_EXPANSION;
     }
 
+    /**
+     * NodeHandler() Node Handler
+     *
+     * @param nodeIndex Node's Collection Index Position
+     * @return Node
+     */
     Node NodeHandler(int nodeIndex) {
         Node *node = &gridNodes.at(nodeIndex);
         if(this->revertState && !IsAClosedNodeState(*node, true))
         {
             cout << "\tCR-State: " << PrintNodeState(node->currentState) << "\tPR-State" << PrintNodeState(node->prevState) << "\tTR-State" <<  PrintNodeState(node->transState) << "\n";
-
             node->currentState = POTENTIAL_ROAD;
         }
         NodeStatesHandler(node);
         return *node;
     }
 
+    /**
+     * GetNode() Gets A Node Based on its Grid Axis Position
+     *
+     * @param gridAxisPoint Vec2 Struct Position
+     * @return Node
+     */
     Node GetNode(const vec2 &gridAxisPoint) {
         int nodeIndex = CombineDigits((int) gridAxisPoint.y, (int) gridAxisPoint.x);
         if (nodeIndex < gridNodes.size()) {
@@ -228,6 +312,13 @@ public:
         return {};
     }
 
+    /**
+     * IsAClosedNodeState() Validate If Node is a Closed State
+     *
+     * @param gridAxisPoint Vec2 Struct Position
+     * @param favorClRoad Boolean Condition To Partial Consider a closed road, a closed node state.
+     * @return Boolean Condition
+     */
     bool IsAClosedNodeState(vec2 &gridAxisPoint, bool favorClRoad = false) {
         Node node = GetNode(gridAxisPoint);
         if (node.currentState == CLOSED_FACTORY || node.currentState == CLOSED_HOUSE ||
@@ -237,6 +328,13 @@ public:
         return false;
     }
 
+    /**
+     *  IsAClosedNodeState() Validate If Node is a Closed State
+     *
+     * @param node Node Struct
+     * @param favorClRoad Boolean Condition To Partial Consider a closed road, a closed node state.
+     * @return Boolean Condition
+     */
     bool IsAClosedNodeState(const Node &node, bool favorClRoad = false) {
         if (node.currentState == CLOSED_FACTORY || node.currentState == CLOSED_HOUSE ||
             (favorClRoad && node.currentState == CLOSED_ROAD)) {
@@ -245,6 +343,12 @@ public:
         return false;
     }
 
+    /**
+     * ResetNodes() Reset Selected Nodes To Previous State
+     *
+     * @param gridAxisPoints Collection
+     * @param enableReset Boolean Condition For Reversion
+     */
     void ResetNodes(vector<vec2> gridAxisPoints, bool enableReset) {
         this->revertState = enableReset;
         for (vec2 &pt: gridAxisPoints) {
@@ -254,6 +358,9 @@ public:
         this->revertState = false;
     }
 
+    /**
+     *  GridReset() Reset All Grid Nodes
+     */
     void GridReset() {
         this->gridDestObjectives.clear();
         for (Node &cell: gridNodes) {
@@ -261,6 +368,10 @@ public:
         }
     }
 
+    /**
+     * IsAllDestinationLinked() Validate If All Destination Objectives Have Been Linked.
+     * @return Boolean Condition
+     */
     bool IsAllDestinationLinked() {
         for (DestinationObjectives &objectives: gridDestObjectives) {
             if (objectives.destLinked == false) {
@@ -270,6 +381,10 @@ public:
         return true;
     }
 
+    /**
+     * GridClearAndCountRoads() Road Counter
+     * @return Integer
+     */
     int GridClearAndCountRoads() {
         int counter = 0;
         for (Node& cell : gridNodes) {
