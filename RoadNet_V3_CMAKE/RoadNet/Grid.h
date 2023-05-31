@@ -202,14 +202,10 @@ public:
             vec2 startPoint = vec2(startC, startR);
             vec2 endPoint = vec2(endC, endR);
 
-            bool isSamePoint = false;
-
             if (startNIndex < gridNodes.size() && endNIndex < gridNodes.size() && !NeighborIsOccupied(startPoint) &&
                 !NeighborIsOccupied(endPoint)) {
-                isSamePoint = IsSimilarNodePos(gridNodes.at(startNIndex).currentPos,
-                                               gridNodes.at(endNIndex).currentPos);
                 if (!IsAClosedNodeState(gridNodes.at(startNIndex), true) && !IsAClosedNodeState(gridNodes.at(endNIndex),
-                                                                                                true) && !isSamePoint) {
+                                                                                                true)) {
                     // House = Start, Factory = End
                     gridNodes.at(startNIndex).currentState = CLOSED_HOUSE;
                     gridNodes.at(endNIndex).currentState = CLOSED_FACTORY;

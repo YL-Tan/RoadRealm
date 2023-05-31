@@ -125,17 +125,13 @@ void GenerateDestination(GridPrimitive &gridPrimitive, int radius = 3, int retry
     while (!addStatus && i < numOfRndValues) {
         rndStPoint = GetRandomPoint();
         FindNeighbors(rndStPoint, radius, potentialValues);
+
         rndEdPoint = GetRandomPoint(numOfRndValues, i, potentialValues);
 
-        if( GetDistance(rndStPoint, rndEdPoint) > 1)
-        {
-            addStatus = gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
-                                                    (int) rndEdPoint.x);
-            if (addStatus) {
-                cout << rndStPoint.x << " " << rndStPoint.y << "\t- " << rndEdPoint.x << " " << rndEdPoint.y << " = "
-                     << GetDistance(rndStPoint, rndEdPoint) << "\n";
-            }
-        }
+        addStatus = gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
+                                                  (int) rndEdPoint.x);
+        // Exhausted All Entries
+        potentialValues.clear();
         i += 1;
     }
 
