@@ -16,8 +16,8 @@
 
 using namespace std;
 
-#define NROWS 12
-#define NCOLS 10
+#define NROWS 14
+#define NCOLS 14
 #define H_EDGE_BUFFER 40
 #define W_EDGE_BUFFER 100
 #define INFO_MSG_SIZE 12
@@ -55,7 +55,7 @@ int APP_WIDTH = 1000, APP_HEIGHT = 800, X_POS = 20, Y_POS = 20,
 
 int GRID_W = GLOBAL_W * 0.75, DISP_W = GLOBAL_W - (GLOBAL_W * 0.22); // +  150;
 float DX = (float) GRID_W / NCOLS, DY = (float) GLOBAL_H /
-                                        NROWS, MAX_DIAMETER_SIZE = 25, MAX_CIR_EXPANSION = 0.6, DIAMETER_PERCENT = 0, ANIMATION_SPEED = 1, DIAMETER_LENGTH = 0;
+                                        NROWS, MAX_DIAMETER_SIZE = 25, MAX_CIR_EXPANSION = 0.6, DIAMETER_PERCENT = 0, ANIMATION_SPEED = 0.65, DIAMETER_LENGTH = 0;
 
 const vec3 WHITE(1, 1, 1), BLACK(0, 0, 0), GREY(.5, .5, .5), RED(1, 0, 0),
         GREEN(0, 1, 0), BLUE(0, 0, 1), YELLOW(1, 1, 0),
@@ -633,7 +633,7 @@ struct Vehicle {
      * @param dt Float DT
      */
     void Update(float dt) {
-        t += speed * dt;
+        t += speed * dt / PathLength(runnerPath);
         if (t < 0 || t > 1) speed = -speed;
         t = t < 0 ? 0 : t > 1 ? 1 : t;
     }

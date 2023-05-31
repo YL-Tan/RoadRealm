@@ -114,7 +114,7 @@ void replenishRoads() {
 }
 
 
-void GenerateDestination(GridPrimitive &gridPrimitive, int radius = 2, int retryCount = 3) {
+void GenerateDestination(GridPrimitive &gridPrimitive, int radius = 3, int retryCount = 3) {
     vec2 rndStPoint;
     vec2 rndEdPoint;
 
@@ -283,7 +283,7 @@ bool AreValidDraggedCells(GridPrimitive &gridPrimitive, Node &houseNode, Node &f
 void ToggleDraggedCellsStates(GridPrimitive &gridPrimitive) {
     if (!GLOBAL_MOUSE_DOWN && !PREV_DRAGGED_CELLS.empty()) {
 
-        Vehicle vehicleRunner(-.25f, .0f);
+        Vehicle vehicleRunner(-.55f, .0f);
         Node houseNode, factoryNode;
         string pathHashKey;
 
@@ -614,13 +614,13 @@ int main(int ac, char **av) {
     myExitButton.SetPosition(vec2(.7f, -.75f));
 
     myPauseButton.SetScale(vec2(.1f, .1f));
-    myPauseButton.SetPosition(vec2(.69f, -.25f));
+    myPauseButton.SetPosition(vec2(.7f, 0.0f));
 
     myResumeButton.SetScale(vec2(.1f, .1f));
-    myResumeButton.SetPosition(vec2(.66f, -.25f));
+    myResumeButton.SetPosition(vec2(.7f, 0.0f));
 
     myClearButton.SetScale(vec2(.1f, .1f));
-    myClearButton.SetPosition(vec2(.7f, 0.0f));
+    myClearButton.SetPosition(vec2(.7f, -.25f));
 
     INIT_FPS_TIME = glfwGetTime();
     PlaySound(TEXT("RoadNet/Sounds/program_start.wav"), NULL, SND_FILENAME | SND_ASYNC);
