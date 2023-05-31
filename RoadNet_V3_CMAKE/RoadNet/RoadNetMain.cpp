@@ -36,7 +36,6 @@ double REPLENISH_INTERVAL = 10.0, FRAMES_PER_SECONDS = 0;
 int REPLENISH_ROADS_NUM = 20;
 float FONT_SCALE = 10.0f;
 
-int PAIR_GENERATION_RETRY = 3;
 string LOCAL_STORAGE = "RoadNet/Storage/best_record.txt";
 
 vec2 CURRENT_CLICKED_CELL((NROWS + NCOLS), (NROWS + NCOLS));
@@ -114,33 +113,36 @@ void replenishRoads() {
 }
 
 
-void GenerateDestination(GridPrimitive &gridPrimitive, int radius = 3, int retryCount = 3) {
+void GenerateDestination(GridPrimitive &gridPrimitive, int radius, int retryCount) {
     bool addStatus = false;
-    int i = 0, numOfRndValues = NUM_OF_RND_VAL + (retryCount * radius);
+    int j = 0, numOfRndValues = NUM_OF_RND_VAL + (retryCount * radius);
 
     vec2 rndStPoint;
     vec2 rndEdPoint;
 
     vector<vec2> potentialValues = {};
 
-    rndStPoint = GetRandomPoint();
+    while (!addStatus && retryCount > 0) {
+        rndStPoint = GetRandomPoint();
+        FindNeighbors(rndStPoint, radius, potentialValues);
 
-    FindNeighbors(rndStPoint, radius, potentialValues);
+        while (j < numOfRndValues) {
+            rndEdPoint = GetRandomPoint(numOfRndValues, j, potentialValues);
+            addStatus = gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
+                                                      (int) rndEdPoint.x);
+            if (addStatus) {
+                cout << "Stop\n";
+                break;
+            }
+            j += 1;
+        }
 
-    while (!addStatus && i < numOfRndValues) {
+        // Exhausted All Entries
+        potentialValues.clear();
 
-        rndEdPoint = GetRandomPoint(numOfRndValues, i, potentialValues);
-
-        addStatus = gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
-                                                  (int) rndEdPoint.x);
-        i += 1;
-    }
-
-    // Exhausted All Entries
-    potentialValues.clear();
-
-    if (!addStatus && retryCount > 0) {
-        GenerateDestination(gridPrimitive, radius + 1, retryCount - 1);
+        j = 0;
+        radius += 2;
+        retryCount -= 1;
     }
 
     if (APPLICATION_STATE == GAME_STATE && addStatus) {

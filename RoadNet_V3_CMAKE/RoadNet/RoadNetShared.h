@@ -22,6 +22,7 @@ using namespace std;
 #define W_EDGE_BUFFER 100
 #define INFO_MSG_SIZE 12
 #define NUM_OF_RND_VAL 5
+#define PAIR_GENERATION_RETRY 4
 
 enum NodeStates {
     OPEN, CLOSED_ROAD, CLOSED_HOUSE, CLOSED_FACTORY, POTENTIAL_ROAD
