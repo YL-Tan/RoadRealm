@@ -127,8 +127,15 @@ void GenerateDestination(GridPrimitive &gridPrimitive, int radius = 3, int retry
         FindNeighbors(rndStPoint, radius, potentialValues);
         rndEdPoint = GetRandomPoint(numOfRndValues, i, potentialValues);
 
-        addStatus = gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
-                                                  (int) rndEdPoint.x);
+        if( GetDistance(rndStPoint, rndEdPoint) > 1)
+        {
+            addStatus = gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
+                                                    (int) rndEdPoint.x);
+            if (addStatus) {
+                cout << rndStPoint.x << " " << rndStPoint.y << "\t- " << rndEdPoint.x << " " << rndEdPoint.y << " = "
+                     << GetDistance(rndStPoint, rndEdPoint) << "\n";
+            }
+        }
         i += 1;
     }
 
@@ -383,6 +390,10 @@ void ResetGameState(GridPrimitive &gridPrimitive) {
         lastPairSpawnTime = 0.0;
         countDown = 5.0f;
         bufferTime = 5.0f;
+
+        DIAMETER_LENGTH = 0;
+        DIAMETER_PERCENT = 0;
+        REDUCE_DIAMETER = true;
 
         gameClock = chrono::duration<double>(0);
 
