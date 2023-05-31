@@ -115,16 +115,19 @@ void replenishRoads() {
 
 
 void GenerateDestination(GridPrimitive &gridPrimitive, int radius = 3, int retryCount = 3) {
+    bool addStatus = false;
+    int i = 0, numOfRndValues = NUM_OF_RND_VAL + (retryCount * radius);
+
     vec2 rndStPoint;
     vec2 rndEdPoint;
 
     vector<vec2> potentialValues = {};
 
-    bool addStatus = false;
-    int i = 0, numOfRndValues = NUM_OF_RND_VAL + (retryCount * radius);
+    rndStPoint = GetRandomPoint();
+
+    FindNeighbors(rndStPoint, radius, potentialValues);
+
     while (!addStatus && i < numOfRndValues) {
-        rndStPoint = GetRandomPoint();
-        FindNeighbors(rndStPoint, radius, potentialValues);
 
         rndEdPoint = GetRandomPoint(numOfRndValues, i, potentialValues);
 

@@ -277,10 +277,10 @@ bool IsWithInBounds(const vec2 &point) {
  * @return Integer Distance
  */
 int GetDistance(const vec2 &firstPoint, const vec2 &secondPoint) {
-    int xAxisDist = (int) abs((secondPoint.x - firstPoint.x));
-    int yAxisDist = (int) abs((secondPoint.y - firstPoint.y));
+    int xDiff = (int) (secondPoint.x - firstPoint.x);
+    int yDiff = (int) (secondPoint.y - firstPoint.y);
 
-    return xAxisDist + yAxisDist;
+    return sqrt(pow(xDiff, 2) + pow(yDiff, 2));
 }
 
 /**
@@ -294,8 +294,8 @@ void FindNeighbors(const vec2 &startingPoint, int dist, vector<vec2> &potentialL
     for (int i = (int) startingPoint.y - dist; i <= (int) startingPoint.y + dist; i++) {
         for (int j = (int) startingPoint.x - dist; j <= (int) startingPoint.x + dist; j++) {
             if ((!(i == (int) startingPoint.y && j == (int) startingPoint.x))) {
-                if (IsWithInBounds(i, j) && GetDistance(vec2(j, i), startingPoint) > 2)
-                    potentialLocations.emplace_back(j, i);
+                if (IsWithInBounds(i, j) && (GetDistance(vec2(j, i), startingPoint) > 1))
+                    potentialLocations.push_back(vec2(j, i));
             }
         }
     }

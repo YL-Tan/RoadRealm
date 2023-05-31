@@ -195,33 +195,36 @@ public:
      * @return Boolean Condition
      */
     bool AddNewObjective(int startR, int startC, int endR, int endC) {
+        int startNIndex = CombineDigits(startR, startC);
+        int endNIndex = CombineDigits(endR, endC);
 
-        if (!DoesDestinationExists(vec2(startR, startC), vec2(endR, endC))) {
-            int startNIndex = CombineDigits(startR, startC);
-            int endNIndex = CombineDigits(endR, endC);
-            vec2 startPoint = vec2(startC, startR);
-            vec2 endPoint = vec2(endC, endR);
+        vec2 startPoint = vec2(startC, startR);
+        vec2 endPoint = vec2(endC, endR);
 
-            if (startNIndex < gridNodes.size() && endNIndex < gridNodes.size() && !NeighborIsOccupied(startPoint) &&
-                !NeighborIsOccupied(endPoint)) {
-                if (!IsAClosedNodeState(gridNodes.at(startNIndex), true) && !IsAClosedNodeState(gridNodes.at(endNIndex),
-                                                                                                true)) {
-                    // House = Start, Factory = End
-                    gridNodes.at(startNIndex).currentState = CLOSED_HOUSE;
-                    gridNodes.at(endNIndex).currentState = CLOSED_FACTORY;
+        if (!DoesDestinationExists(startPoint, endPoint) && startNIndex < gridNodes.size() &&
+            endNIndex < gridNodes.size()) {
 
-                    gridNodes.at(startNIndex).color = WHITE;
-                    gridNodes.at(endNIndex).color = WHITE;
+            bool openNeighbor = !NeighborIsOccupied(startPoint) && !NeighborIsOccupied(endPoint);
+            bool openStates = !IsAClosedNodeState(gridNodes.at(startNIndex), true) &&
+                              !IsAClosedNodeState(gridNodes.at(endNIndex), true);
 
-                    vec3 shrRandColor = GetRandomColor();
+            if (openNeighbor && openStates) {
+                // House = Start, Factory = End
+                gridNodes.at(startNIndex).currentState = CLOSED_HOUSE;
+                gridNodes.at(endNIndex).currentState = CLOSED_FACTORY;
 
-                    gridNodes.at(startNIndex).overlayColor = shrRandColor;
-                    gridNodes.at(endNIndex).overlayColor = shrRandColor;
+                gridNodes.at(startNIndex).color = WHITE;
+                gridNodes.at(endNIndex).color = WHITE;
 
-                    // Add To Objectives
-                    gridDestObjectives.push_back({gridNodes.at(startNIndex), gridNodes.at(endNIndex)});
-                    return true;
-                }
+                vec3 shrRandColor = GetRandomColor();
+
+                gridNodes.at(startNIndex).overlayColor = shrRandColor;
+                gridNodes.at(endNIndex).overlayColor = shrRandColor;
+
+                // Add To Objectives
+                gridDestObjectives.push_back({gridNodes.at(startNIndex), gridNodes.at(endNIndex)});
+                return true;
+
             }
         }
         return false;
