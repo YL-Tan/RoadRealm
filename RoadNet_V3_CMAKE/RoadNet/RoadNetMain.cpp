@@ -130,10 +130,11 @@ void GenerateDestination(GridPrimitive &gridPrimitive, int radius = 3, int retry
 
         addStatus = gridPrimitive.AddNewObjective((int) rndStPoint.y, (int) rndStPoint.x, (int) rndEdPoint.y,
                                                   (int) rndEdPoint.x);
-        // Exhausted All Entries
-        potentialValues.clear();
         i += 1;
     }
+
+    // Exhausted All Entries
+    potentialValues.clear();
 
     if (!addStatus && retryCount > 0) {
         GenerateDestination(gridPrimitive, radius + 1, retryCount - 1);
