@@ -586,6 +586,7 @@ struct Node {
         this->currentState = OPEN;
         this->transState = POTENTIAL_ROAD;
         this->prevState = OPEN;
+        this->isConnected = false;
     }
 };
 
