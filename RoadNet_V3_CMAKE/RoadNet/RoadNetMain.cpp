@@ -8,14 +8,11 @@
 #include "Draw.h"
 #include "GLXtras.h"
 #include "Text.h"
-#include <limits>
 #include <ctime>
 #include <vector>
 #include "Grid.h"
 #include <string>
-#include <set>
 #include <chrono>
-#include <functional>
 #include <map>
 #include <iomanip>
 #include <sstream>
@@ -34,7 +31,9 @@ bool GLOBAL_MOUSE_DOWN = false, GLOBAL_PAUSE = false, GLOBAL_DRAW_BORDERS = fals
 // In Seconds
 double REPLENISH_INTERVAL = 10.0, FRAMES_PER_SECONDS = 0;
 int REPLENISH_ROADS_NUM = 20;
+int SPAWN_INTERVAL = 5;
 float FONT_SCALE = 10.0f;
+
 
 string LOCAL_STORAGE = "RoadNet/Storage/best_record.txt";
 
@@ -194,7 +193,7 @@ void Update(GridPrimitive &gridPrimitive) {
             bufferTime = 5.0f;
         }
         int radius = ((((int) gameClock.count() % 3600) / 60) + 1) * 2;
-        spawnPair(5, gridPrimitive, radius);
+        spawnPair(SPAWN_INTERVAL, gridPrimitive, radius);
         replenishRoads();
     } else {
         oldtime = now;
